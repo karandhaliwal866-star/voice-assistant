@@ -51,47 +51,40 @@
 
 <h1>🤖 Voice Assistant</h1>
 <p>Tap the button and say “Hello”</p>
-
+<h2 id="greetingText"></h2>
 <button onclick="startAssistant()">🎤 Speak</button>
 
 <div id="status">Waiting…</div>
 
 <script>
-function startAssistant() {
-  const recognition = new webkitSpeechRecognition();
-  recognition.lang = "en-US";
+/* ===== START : Time Greeting Code ===== */
 
-  document.getElementById("status").innerText = "Listening...";
+function timeGreeting() {
+  const hour = new Date().getHours();
+  let message = "";
 
-  recognition.onresult = function(event) {
-    const text = event.results[0][0].transcript.toLowerCase();
-    document.getElementById("status").innerText = "You said: " + text;
-    respond(text);
-  };
-
-  recognition.start();
-}
-
-function respond(text) {
-  let reply = "Sorry, I didn’t understand.";
-
-  if (text.includes("hello")) {
-    reply = "Hello! Nice to meet you. How can I help you?";
-  } else if (text.includes("your name")) {
-    reply = "I am a simple voice assistant.";
-  } else if (text.includes("time")) {
-    reply = "The time is " + new Date().toLocaleTimeString();
+  if (hour >= 5 && hour < 12) {
+    message = "Good morning, nice to meet you";
+  } else if (hour >= 12 && hour < 17) {
+    message = "Good afternoon, nice to meet you";
+  } else {
+    message = "Good evening, nice to meet you";
   }
 
-  speak(reply);
-}
+  // Show text on website
+  document.getElementById("greetingText").innerText = message;
 
-function speak(msg) {
-  const speech = new SpeechSynthesisUtterance(msg);
+  // Speak the greeting
+  const speech = new SpeechSynthesisUtterance(message);
   speech.lang = "en-US";
   window.speechSynthesis.speak(speech);
 }
-</script
+
+// Run automatically when page loads
+window.onload = timeGreeting;
+
+/* ===== END : Time Greeting Code ===== */
+</script>
 
 </body>
                        </html>
