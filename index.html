@@ -19,16 +19,8 @@
       text-align: center;
     }
 
-    h1 {
-      font-size: 2.3rem;
-      margin-bottom: 10px;
-    }
-
-    p {
-      opacity: 0.85;
-      margin-bottom: 30px;
-    }
-
+    h1 { font-size: 2.3rem; margin-bottom: 10px; }
+    p { opacity: 0.85; margin-bottom: 30px; }
     button {
       background: #38bdf8;
       border: none;
@@ -38,53 +30,70 @@
       cursor: pointer;
       box-shadow: 0 0 25px #38bdf8;
     }
-
-    #status {
-      margin-top: 25px;
-      font-size: 16px;
-      opacity: 0.9;
-    }
+    #status { margin-top: 25px; font-size: 16px; opacity: 0.9; }
   </style>
 </head>
 
 <body>
 
 <h1>🤖 Voice Assistant</h1>
-<p>Tap the button and say “Hello”</p>
-<h2 id="greetingText"></h2>
+<p>Tap the button and say something!</p>
 <button onclick="startAssistant()">🎤 Speak</button>
-
 <div id="status">Waiting…</div>
 
 <script>
-/* ===== START : Time Greeting Code ===== */
-
-function timeGreeting() {
-  const hour = new Date().getHours();
-  let message = "";
-
-  if (hour >= 5 && hour < 12) {
-    message = "Good morning, nice to meet you";
-  } else if (hour >= 12 && hour < 17) {
-    message = "Good afternoon, nice to meet you";
-  } else {
-    message = "Good evening, nice to meet you";
+  // Function to speak text
+  function speak(text) {
+      var utterance = new SpeechSynthesisUtterance(text);
+      window.speechSynthesis.speak(utterance);
   }
 
-  // Show text on website
-  document.getElementById("greetingText").innerText = message;
+  // Function to send text to Python
+  function sendToPython(text) {
+      fetch("http://127.0.0.1:5000/command", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: text })
+      })
+      .then(response => response.json())
+      .then(data => {
+          speak(data.reply);
+          document.getElementById("status").innerText = "Assistant: " + data.reply;
+          console.log(data.reply);
+      })
+      .catch(error => {
+          console.error("Error:", error);
+          speak("Sorry, something went wrong.");
+      });
+  }
 
-  // Speak the greeting
-  const speech = new SpeechSynthesisUtterance(message);
-  speech.lang = "en-US";
-  window.speechSynthesis.speak(speech);
-}
+  // Function to start voice recognition
+  function startAssistant() {
+      var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.lang = "en-US";
+      recognition.start();
+      document.getElementById("status").innerText = "Listening…";
 
-// Run automatically when page loads
-window.onload = timeGreeting;
+      recognition.onresult = function(event) {
+          var recognizedText = event.results[0][0].transcript;
+          document.getElementById("status").innerText = "You said: " + recognizedText;
+          console.log("You said: " + recognizedText);
 
-/* ===== END : Time Greeting Code ===== */
+          // Send recognized text to Python
+          sendToPython(recognizedText);
+      };
+
+      recognition.onerror = function(event) {
+          console.error(event.error);
+          speak("Sorry, I could not hear you properly.");
+          document.getElementById("status").innerText = "Error: " + event.error;
+      };
+
+      recognition.onend = function() {
+          document.getElementById("status").innerText += " (Listening stopped)";
+      };
+  }
 </script>
 
 </body>
-                       </html>
+</html>
