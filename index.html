@@ -1,68 +1,158 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Voice Assistant</title>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nova AI - Dynamic Assistant</title>
   <style>
     body {
       background: #020617;
       color: white;
-      font-family: Arial;
-      text-align: center;
-      padding-top: 100px;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
+
+    /* Animated AI Ring */
+    .ai-container {
+      position: relative;
+      width: 200px;
+      height: 200px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .ring {
+      width: 100%;
+      height: 100%;
+      border: 4px solid transparent;
+      border-top: 4px solid #38bdf8;
+      border-radius: 50%;
+      position: absolute;
+      transition: 0.5s;
+    }
+
+    .listening .ring {
+      animation: spin 1s linear infinite;
+      border-top: 4px solid #f472b6; /* Changes color when listening */
+      box-shadow: 0 0 15px #f472b6;
+    }
+
+    @keyframes spin {
+      100% { transform: rotate(360deg); }
+    }
+
+    h1 { font-size: 2.5rem; letter-spacing: 2px; }
     button {
-      padding: 15px 30px;
-      font-size: 18px;
-      border-radius: 30px;
-      border: none;
-      background: #38bdf8;
+      padding: 12px 30px;
+      font-size: 1rem;
+      border-radius: 25px;
+      border: 2px solid #38bdf8;
+      background: transparent;
+      color: white;
+      cursor: pointer;
+      z-index: 10;
     }
+    #status { color: #64748b; margin-top: 15px; }
+    #transcript { color: #38bdf8; font-weight: bold; min-height: 20px; }
   </style>
 </head>
 <body>
 
-<h1>🤖 Voice Assistant</h1>
-<button onclick="start()">🎤 Speak</button>
-<p id="status">Idle</p>
+  <div class="ai-container" id="container">
+    <div class="ring"></div>
+    <h1>🤖</h1>
+  </div>
+
+  <h1 id="headline">NOVA AI</h1>
+  <button onclick="start()">ACTIVATE VOICE</button>
+  <p id="status">Click to speak</p>
+  <p id="transcript"></p>
 
 <script>
-let recognition;
+const statusDisplay = document.getElementById("status");
+const transcriptDisplay = document.getElementById("transcript");
+const container = document.getElementById("container");
+
+// Function to determine greeting based on time of day
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
+}
 
 function speak(text) {
-  let msg = new SpeechSynthesisUtterance(text);
-  msg.lang = "en-US";
-  speechSynthesis.speak(msg);
+  const msg = new SpeechSynthesisUtterance(text);
+  window.speechSynthesis.speak(msg);
 }
 
 function start() {
-  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Recognition) {
+    alert("Speech recognition not supported in this browser.");
+    return;
+  }
+
+  const recognition = new Recognition();
   recognition.lang = "en-US";
-  recognition.continuous = false;
+
+  recognition.onstart = () => {
+    container.classList.add("listening");
+    statusDisplay.innerText = "I'm listening...";
+  };
+
+  recognition.onresult = (event) => {
+    const text = event.results[0][0].transcript.toLowerCase();
+    transcriptDisplay.innerText = `You: ${text}`;
+    processCommand(text);
+  };
+
+  recognition.onend = () => {
+    container.classList.remove("listening");
+    statusDisplay.innerText = "Click to talk again";
+  };
 
   recognition.start();
-  document.getElementById("status").innerText = "Listening...";
+}
 
-  recognition.onresult = function(e) {
-    let text = e.results[0][0].transcript.toLowerCase();
-    document.getElementById("status").innerText = "You said: " + text;
+function processCommand(text) {
+  // 1. Time-Aware Greetings
+  if (text.includes("hello") || text.includes("hey") || text.includes("hi")) {
+    const greeting = getGreeting();
+    speak(`${greeting}! How can I help you right now?`);
+  } 
 
-    if (text.includes("hello")) {
-      speak("Hello, I am your voice assistant");
-    } else if (text.includes("time")) {
-      speak(new Date().toLocaleTimeString());
-    } else if (text.includes("date")) {
-      speak(new Date().toDateString());
-    } else {
-      speak("I did not understand");
-    }
-  };
+  // 2. Time Report
+  else if (text.includes("time")) {
+    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    speak(`It is currently ${time}`);
+  }
 
-  recognition.onend = function() {
-    document.getElementById("status").innerText = "Tap speak again";
-  };
+  // 3. Search Google
+  else if (text.includes("google")) {
+    const query = text.replace("google", "").trim();
+    speak("Searching for " + query);
+    window.open(`https://www.google.com/search?q=${query}`, "_blank");
+  }
+
+  // 4. Fun Feature: My Name
+  else if (text.includes("my name is")) {
+    const name = text.split("is")[1];
+    speak("Nice to meet you," + name + ". I will remember that.");
+    localStorage.setItem("username", name);
+  }
+
+  else {
+    speak("I heard you say: " + text);
+  }
 }
 </script>
-
 </body>
 </html>
