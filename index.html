@@ -84,13 +84,7 @@
       recognition.onerror = function(event) {
           console.error(event.error);
           speak("Sorry, I could not hear you properly.");
-          document.getElementById("status").innerText = "Error: " + event.error;
-      };
-
-      recognition.onend = function() {
-          document.getElementById("status").innerText += " (Listening stopped)";
-      };
-  }
+          document.getElementById("status").inner
 </script>
 
 </body>
