@@ -1,78 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<title>Voice Assistant</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  margin: 0;
-  height: 100vh;
-  background: radial-gradient(circle, #1e293b, #020617);
-  color: white;
-  font-family: Arial;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-}
-button {
-  padding: 15px 30px;
-  font-size: 18px;
-  border-radius: 30px;
-  border: none;
-  background: #38bdf8;
-}
-#status {
-  margin-top: 20px;
-}
-</style>
+  <title>Voice Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      background: #020617;
+      color: white;
+      font-family: Arial;
+      text-align: center;
+      padding-top: 100px;
+    }
+    button {
+      padding: 15px 30px;
+      font-size: 18px;
+      border-radius: 30px;
+      border: none;
+      background: #38bdf8;
+    }
+  </style>
 </head>
-
 <body>
 
 <h1>🤖 Voice Assistant</h1>
-<button onclick="startAssistant()">🎤 Speak</button>
-<div id="status">Idle</div>
+<button onclick="start()">🎤 Speak</button>
+<p id="status">Idle</p>
 
 <script>
 let recognition;
 
 function speak(text) {
-  let speech = new SpeechSynthesisUtterance(text);
-  speech.lang = "en-US";
-  window.speechSynthesis.speak(speech);
+  let msg = new SpeechSynthesisUtterance(text);
+  msg.lang = "en-US";
+  speechSynthesis.speak(msg);
 }
 
-function sendToPython(text) {
-  fetch("http://192.168.1.66:5000/command", {   // 🔴 CHANGE IP if needed
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({text: text})
-  })
-  .then(res => res.json())
-  .then(data => {
-    speak(data.reply);
-  });
-}
-
-function startAssistant() {
+function start() {
   recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
   recognition.lang = "en-US";
-  recognition.continuous = true;
+  recognition.continuous = false;
 
   recognition.start();
   document.getElementById("status").innerText = "Listening...";
 
-  recognition.onresult = function(event) {
-    let text = event.results[event.results.length - 1][0].transcript;
+  recognition.onresult = function(e) {
+    let text = e.results[0][0].transcript.toLowerCase();
     document.getElementById("status").innerText = "You said: " + text;
-    sendToPython(text);
+
+    if (text.includes("hello")) {
+      speak("Hello, I am your voice assistant");
+    } else if (text.includes("time")) {
+      speak(new Date().toLocaleTimeString());
+    } else if (text.includes("date")) {
+      speak(new Date().toDateString());
+    } else {
+      speak("I did not understand");
+    }
   };
 
   recognition.onend = function() {
-    recognition.start(); // 🔁 keeps listening
+    document.getElementById("status").innerText = "Tap speak again";
   };
 }
 </script>
