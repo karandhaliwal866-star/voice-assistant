@@ -1,90 +1,80 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Voice Assistant</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Voice Assistant</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      background: radial-gradient(circle, #1e293b, #020617);
-      color: white;
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-    }
-
-    h1 { font-size: 2.3rem; margin-bottom: 10px; }
-    p { opacity: 0.85; margin-bottom: 30px; }
-    button {
-      background: #38bdf8;
-      border: none;
-      padding: 18px 36px;
-      font-size: 18px;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 0 25px #38bdf8;
-    }
-    #status { margin-top: 25px; font-size: 16px; opacity: 0.9; }
-  </style>
+<style>
+body {
+  margin: 0;
+  height: 100vh;
+  background: radial-gradient(circle, #1e293b, #020617);
+  color: white;
+  font-family: Arial;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+button {
+  padding: 15px 30px;
+  font-size: 18px;
+  border-radius: 30px;
+  border: none;
+  background: #38bdf8;
+}
+#status {
+  margin-top: 20px;
+}
+</style>
 </head>
 
 <body>
 
 <h1>🤖 Voice Assistant</h1>
-<p>Tap the button and say something!</p>
 <button onclick="startAssistant()">🎤 Speak</button>
-<div id="status">Waiting…</div>
+<div id="status">Idle</div>
 
 <script>
-  // Function to speak text
-  function speak(text) {
-      var utterance = new SpeechSynthesisUtterance(text);
-      window.speechSynthesis.speak(utterance);
-  }
-  
-  // Function to send text to Python
-  function sendToPython(text) {
-    fetch("http://192.168.1.66:5000/command", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text })
-    })
-    .then(response => response.json())
-    .then(data => {
-        speak(data.reply);
-        console.log(data.reply);
-    })
-    .catch(error => {
-        console.error("Error:", error);
-    });
-  }
-  
-// Function to start voice recognition
-  function startAssistant() {
-      var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-      recognition.lang = "en-US";
-      recognition.start();
-      document.getElementById("status").innerText = "Listening…";
+let recognition;
 
-      recognition.onresult = function(event) {
-          var recognizedText = event.results[0][0].transcript;
-          document.getElementById("status").innerText = "You said: " + recognizedText;
-          console.log("You said: " + recognizedText);
+function speak(text) {
+  let speech = new SpeechSynthesisUtterance(text);
+  speech.lang = "en-US";
+  window.speechSynthesis.speak(speech);
+}
 
-          // Send recognized text to Python
-          sendToPython(recognizedText);
-      };
+function sendToPython(text) {
+  fetch("http://192.168.1.66:5000/command", {   // 🔴 CHANGE IP if needed
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({text: text})
+  })
+  .then(res => res.json())
+  .then(data => {
+    speak(data.reply);
+  });
+}
 
-      recognition.onerror = function(event) {
-          console.error(event.error);
-          speak("Sorry, I could not hear you properly.");
-          document.getElementById("status").inner
+function startAssistant() {
+  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+  recognition.lang = "en-US";
+  recognition.continuous = true;
+
+  recognition.start();
+  document.getElementById("status").innerText = "Listening...";
+
+  recognition.onresult = function(event) {
+    let text = event.results[event.results.length - 1][0].transcript;
+    document.getElementById("status").innerText = "You said: " + text;
+    sendToPython(text);
+  };
+
+  recognition.onend = function() {
+    recognition.start(); // 🔁 keeps listening
+  };
+}
 </script>
 
 </body>
