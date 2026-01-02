@@ -3,154 +3,158 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova AI - Dynamic Assistant</title>
+  <title>Nova AI v2</title>
   <style>
+    /* 1. Modern Background */
     body {
-      background: #020617;
+      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
       color: white;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       height: 100vh;
       margin: 0;
+      overflow: hidden;
     }
 
-    /* Animated AI Ring */
-    .ai-container {
+    /* 2. The Glassmorphism Card */
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      padding: 40px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+      width: 80%;
+      max-width: 400px;
+    }
+
+    /* 3. The Animated AI Orb */
+    .orb-container {
       position: relative;
-      width: 200px;
-      height: 200px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-bottom: 20px;
+      width: 150px;
+      height: 150px;
+      margin: 0 auto 30px;
     }
 
-    .ring {
+    .orb {
+      position: absolute;
       width: 100%;
       height: 100%;
-      border: 4px solid transparent;
-      border-top: 4px solid #38bdf8;
+      background: linear-gradient(45deg, #38bdf8, #818cf8, #c084fc);
       border-radius: 50%;
-      position: absolute;
-      transition: 0.5s;
+      filter: blur(20px);
+      opacity: 0.6;
+      transition: 0.5s ease;
     }
 
-    .listening .ring {
-      animation: spin 1s linear infinite;
-      border-top: 4px solid #f472b6; /* Changes color when listening */
-      box-shadow: 0 0 15px #f472b6;
+    /* Pulse effect when listening */
+    .listening .orb {
+      animation: fluidMove 3s infinite ease-in-out alternate, pulse 1.5s infinite alternate;
+      opacity: 1;
+      filter: blur(10px);
     }
 
-    @keyframes spin {
-      100% { transform: rotate(360deg); }
+    @keyframes fluidMove {
+      0% { border-radius: 50% 50% 50% 70%; }
+      100% { border-radius: 70% 50% 80% 50%; }
     }
 
-    h1 { font-size: 2.5rem; letter-spacing: 2px; }
-    button {
+    @keyframes pulse {
+      from { transform: scale(1); }
+      to { transform: scale(1.15); }
+    }
+
+    /* 4. Sleek Typography & Button */
+    h1 { font-weight: 300; letter-spacing: 4px; margin: 0; color: #f1f5f9; }
+    #status { color: #94a3b8; font-size: 0.9rem; margin: 10px 0 25px; }
+    #transcript { min-height: 50px; color: #38bdf8; font-weight: 500; margin-bottom: 20px; }
+
+    .btn-main {
+      background: white;
+      color: #020617;
+      border: none;
       padding: 12px 30px;
-      font-size: 1rem;
-      border-radius: 25px;
-      border: 2px solid #38bdf8;
-      background: transparent;
-      color: white;
+      border-radius: 12px;
+      font-weight: 600;
       cursor: pointer;
-      z-index: 10;
+      transition: 0.3s;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
     }
-    #status { color: #64748b; margin-top: 15px; }
-    #transcript { color: #38bdf8; font-weight: bold; min-height: 20px; }
+
+    .btn-main:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3);
+    }
   </style>
 </head>
-<body>
+<body id="body">
 
-  <div class="ai-container" id="container">
-    <div class="ring"></div>
-    <h1>🤖</h1>
+  <div class="glass-card" id="main-ui">
+    <div class="orb-container">
+      <div class="orb"></div>
+    </div>
+    <h1>NOVA</h1>
+    <p id="status">System Standby</p>
+    <div id="transcript">Click below to speak</div>
+    <button class="btn-main" onclick="start()">ACTIVATE</button>
   </div>
-
-  <h1 id="headline">NOVA AI</h1>
-  <button onclick="start()">ACTIVATE VOICE</button>
-  <p id="status">Click to speak</p>
-  <p id="transcript"></p>
 
 <script>
 const statusDisplay = document.getElementById("status");
 const transcriptDisplay = document.getElementById("transcript");
-const container = document.getElementById("container");
-
-// Function to determine greeting based on time of day
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
-}
+const mainUI = document.getElementById("main-ui");
 
 function speak(text) {
   const msg = new SpeechSynthesisUtterance(text);
+  msg.pitch = 1.1;
+  msg.rate = 1;
   window.speechSynthesis.speak(msg);
 }
 
 function start() {
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!Recognition) {
-    alert("Speech recognition not supported in this browser.");
-    return;
-  }
+  if (!Recognition) return alert("Browser not supported");
 
   const recognition = new Recognition();
-  recognition.lang = "en-US";
-
+  
   recognition.onstart = () => {
-    container.classList.add("listening");
-    statusDisplay.innerText = "I'm listening...";
+    mainUI.classList.add("listening");
+    statusDisplay.innerText = "Listening...";
   };
 
   recognition.onresult = (event) => {
     const text = event.results[0][0].transcript.toLowerCase();
-    transcriptDisplay.innerText = `You: ${text}`;
+    transcriptDisplay.innerText = text;
     processCommand(text);
   };
 
   recognition.onend = () => {
-    container.classList.remove("listening");
-    statusDisplay.innerText = "Click to talk again";
+    mainUI.classList.remove("listening");
+    statusDisplay.innerText = "Standby";
   };
 
   recognition.start();
 }
 
 function processCommand(text) {
-  // 1. Time-Aware Greetings
-  if (text.includes("hello") || text.includes("hey") || text.includes("hi")) {
-    const greeting = getGreeting();
-    speak(`${greeting}! How can I help you right now?`);
+  if (text.includes("hello") || text.includes("hi")) {
+    const hour = new Date().getHours();
+    let greet = "Good evening";
+    if (hour < 12) greet = "Good morning";
+    else if (hour < 18) greet = "Good afternoon";
+    
+    speak(`Hello! ${greet}, nice to meet you. I am ready for your questions.`);
   } 
-
-  // 2. Time Report
-  else if (text.includes("time")) {
-    const time = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    speak(`It is currently ${time}`);
-  }
-
-  // 3. Search Google
-  else if (text.includes("google")) {
-    const query = text.replace("google", "").trim();
-    speak("Searching for " + query);
-    window.open(`https://www.google.com/search?q=${query}`, "_blank");
-  }
-
-  // 4. Fun Feature: My Name
-  else if (text.includes("my name is")) {
-    const name = text.split("is")[1];
-    speak("Nice to meet you," + name + ". I will remember that.");
-    localStorage.setItem("username", name);
-  }
-
   else {
-    speak("I heard you say: " + text);
+    speak("I will find the answer for " + text);
+    setTimeout(() => {
+      window.open(`https://www.google.com/search?q=${text}`, "_blank");
+    }, 1000);
   }
 }
 </script>
