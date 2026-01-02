@@ -47,27 +47,25 @@
       var utterance = new SpeechSynthesisUtterance(text);
       window.speechSynthesis.speak(utterance);
   }
-
+  
   // Function to send text to Python
   function sendToPython(text) {
-      fetch("http://127.0.0.1:5000/command", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: text })
-      })
-      .then(response => response.json())
-      .then(data => {
-          speak(data.reply);
-          document.getElementById("status").innerText = "Assistant: " + data.reply;
-          console.log(data.reply);
-      })
-      .catch(error => {
-          console.error("Error:", error);
-          speak("Sorry, something went wrong.");
-      });
+    fetch("http://192.168.1.66:5000/command", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: text })
+    })
+    .then(response => response.json())
+    .then(data => {
+        speak(data.reply);
+        console.log(data.reply);
+    })
+    .catch(error => {
+        console.error("Error:", error);
+    });
   }
-
-  // Function to start voice recognition
+  
+// Function to start voice recognition
   function startAssistant() {
       var recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
       recognition.lang = "en-US";
