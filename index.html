@@ -1,184 +1,57 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Nova AI v2 - Stable</title>
-  <style>
-    body {
-      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
-      color: white;
-      font-family: 'Inter', system-ui, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      overflow: hidden;
-    }
-    .glass-card {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(15px);
-      -webkit-backdrop-filter: blur(15px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 30px;
-      padding: 40px;
-      text-align: center;
-      width: 85%;
-      max-width: 400px;
-      position: relative;
-    }
-    .orb-container { width: 150px; height: 150px; margin: 0 auto 30px; position: relative; }
-    .orb {
-      position: absolute; width: 100%; height: 100%;
-      background: linear-gradient(45deg, #38bdf8, #818cf8, #c084fc);
-      border-radius: 50%; filter: blur(20px); opacity: 0.6; transition: 0.5s;
-    }
-    .listening .orb { animation: pulse 1.5s infinite alternate; background: #34d399; opacity: 1; }
-    .thinking .orb { animation: spin 2s linear infinite; background: #fbbf24; }
-    @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.15); } }
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    
-    h1 { font-weight: 300; letter-spacing: 4px; margin: 0; }
-    #status { color: #94a3b8; font-size: 0.8rem; margin: 10px 0; }
-    #transcript { min-height: 50px; color: #38bdf8; margin-bottom: 20px; font-size: 0.9rem; overflow-y: auto; max-height: 100px; }
-    
-    .btn-main { background: white; color: #020617; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; }
-    .btn-main:active { transform: scale(0.95); }
-
-    .btn-settings {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      background: none;
-      border: none;
-      color: rgba(255, 255, 255, 0.3);
-      font-size: 1.2rem;
-      cursor: pointer;
-    }
-  </style>
+    <title>Nova AI</title>
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 50px; }
+        #status { color: #0f0; margin-bottom: 20px; }
+        button { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 50px; border: none; background: #6200ee; color: white; }
+    </style>
 </head>
 <body>
-  <div class="glass-card" id="main-ui">
-    <button class="btn-settings" onclick="setApiKey()" title="Settings">⚙️</button>
-    <div class="orb-container"><div class="orb"></div></div>
-    <h1>NOVA</h1>
-    <p id="status">System Standby</p>
-    <div id="transcript">Click Activate to speak</div>
-    <button class="btn-main" onclick="start()">ACTIVATE</button>
-  </div>
+    <h1>Nova AI</h1>
+    <div id="status">Brain Status: Ready</div>
+    <div id="transcript" style="margin: 20px; min-height: 50px;">Click Activate to speak...</div>
+    <button id="activateBtn">ACTIVATE NOVA</button>
 
-<script>
-const statusDisplay = document.getElementById("status");
-const transcriptDisplay = document.getElementById("transcript");
-const mainUI = document.getElementById("main-ui");
+    <script>
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const synth = window.speechSynthesis;
 
-let API_KEY = localStorage.getItem("nova_api_key") || "";
+        document.getElementById('activateBtn').onclick = () => {
+            recognition.start();
+            document.getElementById('status').innerText = "Nova is listening...";
+        };
 
-// --- VOICE SETUP ---
-let maleVoice = null;
-function loadVoices() {
-    const voices = window.speechSynthesis.getVoices();
-    // Prioritize high-quality male voices
-    maleVoice = voices.find(v => v.name.includes('Male') || v.name.includes('David') || v.name.includes('Google UK English Male') || v.name.includes('Premium'));
-}
-window.speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
+        recognition.onresult = async (event) => {
+            const userInput = event.results[0][0].transcript;
+            document.getElementById('transcript').innerText = "You: " + userInput;
+            
+            // --- CONNECTING TO PYDROID ---
+            try {
+                const response = await fetch("http://127.0.0.1:5000/ask", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: userInput })
+                });
 
-function speak(text) {
-  window.speechSynthesis.cancel();
-  const msg = new SpeechSynthesisUtterance(text);
-  if (maleVoice) msg.voice = maleVoice;
-  msg.pitch = 0.9; 
-  msg.rate = 1.0;
-  window.speechSynthesis.speak(msg);
-}
+                const data = await response.json();
+                handleNovaReply(data.reply);
+            } catch (err) {
+                console.error(err);
+                speak("I can't reach my brain. Is Pydroid running?");
+            }
+        };
 
-// --- KEY MANAGEMENT ---
-function setApiKey() {
-    const current = localStorage.getItem("nova_api_key") || "";
-    const inputKey = window.prompt("Settings: Paste your Gemini API Key here:", current);
-    if (inputKey !== null) {
-        const cleanKey = inputKey.trim();
-        localStorage.setItem("nova_api_key", cleanKey);
-        API_KEY = cleanKey;
-        alert("API Key updated successfully!");
-    }
-}
-
-// --- AI LOGIC ---
-async function askNova(userInput) {
-    if (!API_KEY) {
-        setApiKey();
-        if (!API_KEY) return speak("I need a valid API key to function.");
-    }
-
-    mainUI.classList.remove("listening");
-    mainUI.classList.add("thinking");
-    statusDisplay.innerText = "Thinking...";
-    
-    try {
-        // Using the 2026-standard stable Gemini 2.5 Flash model
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${API_KEY}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ 
-                contents: [{ parts: [{ text: "You are Nova, a helpful and witty male AI assistant. Answer this briefly: " + userInput }] }] 
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (data.error) {
-            const errorMsg = data.error.message || "Unknown error";
-            transcriptDisplay.innerText = "Error: " + errorMsg;
-            speak("I encountered an issue. " + errorMsg);
-            return;
+        function handleNovaReply(text) {
+            document.getElementById('transcript').innerText = "Nova: " + text;
+            speak(text);
         }
 
-        const aiText = data.candidates[0].content.parts[0].text;
-        const cleanText = aiText.replace(/\*/g, ""); // Remove markdown bolding
-        transcriptDisplay.innerText = cleanText;
-        speak(cleanText);
-
-    } catch (e) { 
-        transcriptDisplay.innerText = "Connection failed. Please check your internet.";
-        speak("I am having trouble connecting to my brain right now.");
-    }
-    finally { 
-        mainUI.classList.remove("thinking"); 
-        statusDisplay.innerText = "Standby"; 
-    }
-}
-
-// --- VOICE RECOGNITION ---
-function start() {
-  const Recognition = window.webkitSpeechRecognition || window.SpeechRecognition;
-  if (!Recognition) return alert("Your browser does not support speech recognition.");
-  
-  const rec = new Recognition();
-  rec.lang = 'en-US';
-  
-  rec.onstart = () => { 
-    mainUI.classList.add("listening"); 
-    statusDisplay.innerText = "Listening..."; 
-  };
-  
-  rec.onresult = (e) => { 
-    const txt = e.results[0][0].transcript; 
-    transcriptDisplay.innerText = '"' + txt + '"'; 
-    askNova(txt); 
-  };
-  
-  rec.onerror = (e) => {
-    statusDisplay.innerText = "Error: " + e.error;
-    mainUI.classList.remove("listening");
-  };
-  
-  rec.onend = () => mainUI.classList.remove("listening");
-  rec.start();
-}
-</script>
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            synth.speak(utterance);
+        }
+    </script>
 </body>
 </html>
