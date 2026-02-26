@@ -1,57 +1,178 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Nova AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova AI | Neural Link</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; text-align: center; padding: 50px; }
-        #status { color: #0f0; margin-bottom: 20px; }
-        button { padding: 15px 30px; font-size: 18px; cursor: pointer; border-radius: 50px; border: none; background: #6200ee; color: white; }
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #0d0d0d;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #nova-container {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #333;
+            border-radius: 20px;
+            background: rgba(20, 20, 20, 0.8);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+            max-width: 90%;
+        }
+
+        h1 { color: #00f2ff; letter-spacing: 2px; margin-bottom: 5px; }
+        
+        #status {
+            font-size: 14px;
+            color: #00ff88;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        #transcript {
+            margin: 20px 0;
+            min-height: 80px;
+            font-style: italic;
+            color: #bbb;
+            line-height: 1.5;
+        }
+
+        button {
+            padding: 15px 40px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 50px;
+            border: none;
+            background: linear-gradient(45deg, #0072ff, #00c6ff);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 114, 255, 0.4);
+            transition: 0.3s;
+        }
+
+        button:active { transform: scale(0.95); }
+
+        /* Style for the Error Popup */
+        #error-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #1a1a1a;
+            border: 2px solid #ff4b2b;
+            padding: 25px;
+            z-index: 1000;
+            border-radius: 15px;
+            width: 80%;
+            box-shadow: 0 0 50px rgba(255, 75, 43, 0.5);
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 999;
+        }
     </style>
 </head>
 <body>
-    <h1>Nova AI</h1>
-    <div id="status">Brain Status: Ready</div>
-    <div id="transcript" style="margin: 20px; min-height: 50px;">Click Activate to speak...</div>
-    <button id="activateBtn">ACTIVATE NOVA</button>
+
+    <div id="nova-container">
+        <h1>NOVA AI</h1>
+        <div id="status">System: Connected</div>
+        <div id="transcript">Click the button and say "Hello Nova"</div>
+        <button id="activateBtn">ACTIVATE NEURAL LINK</button>
+    </div>
+
+    <div class="overlay" id="overlay"></div>
+    <div id="error-modal">
+        <h2 style="color: #ff4b2b; margin-top: 0;">⚠️ CONNECTION BLOCKED</h2>
+        <p>I can't reach my brain in Pydroid. Please follow these steps:</p>
+        <ol style="text-align: left; font-size: 14px;">
+            <li>Tap the <b>Tune/Slider icon</b> ⚙️ (top left of address bar).</li>
+            <li>Tap <b>Site Settings</b>.</li>
+            <li>Find <b>Insecure Content</b> and set it to <b>ALLOW</b>.</li>
+            <li><b>Refresh</b> this page.</li>
+        </ol>
+        <button onclick="closeModal()" style="background: #333; padding: 10px 20px;">Close</button>
+    </div>
 
     <script>
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         const synth = window.speechSynthesis;
+        const modal = document.getElementById('error-modal');
+        const overlay = document.getElementById('overlay');
 
-        document.getElementById('activateBtn').onclick = () => {
-            recognition.start();
-            document.getElementById('status').innerText = "Nova is listening...";
-        };
+        function showError() {
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+        }
 
-        recognition.onresult = async (event) => {
-            const userInput = event.results[0][0].transcript;
-            document.getElementById('transcript').innerText = "You: " + userInput;
-            
-            // --- CONNECTING TO PYDROID ---
+        function closeModal() {
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        }
+
+        async function checkBrainConnection(userInput) {
             try {
+                // Connecting to your Pydroid server
                 const response = await fetch("http://127.0.0.1:5000/ask", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ message: userInput })
                 });
 
+                if (!response.ok) throw new Error("Server error");
+                
                 const data = await response.json();
                 handleNovaReply(data.reply);
             } catch (err) {
-                console.error(err);
-                speak("I can't reach my brain. Is Pydroid running?");
+                console.error("Connection failed:", err);
+                showError(); // Show the cool new popup
+                speak("I can't reach my brain. Please allow insecure content in your settings.");
             }
+        }
+
+        document.getElementById('activateBtn').onclick = () => {
+            recognition.start();
+            document.getElementById('status').innerText = "Nova is listening...";
+            document.getElementById('status').style.color = "#ff00ff";
+        };
+
+        recognition.onresult = async (event) => {
+            const userInput = event.results[0][0].transcript;
+            document.getElementById('transcript').innerText = "You: " + userInput;
+            document.getElementById('status').innerText = "Processing...";
+            document.getElementById('status').style.color = "#00f2ff";
+            
+            checkBrainConnection(userInput);
         };
 
         function handleNovaReply(text) {
             document.getElementById('transcript').innerText = "Nova: " + text;
+            document.getElementById('status').innerText = "System: Connected";
+            document.getElementById('status').style.color = "#00ff88";
             speak(text);
         }
 
         function speak(text) {
             const utterance = new SpeechSynthesisUtterance(text);
+            // Optional: Nova's voice speed
+            utterance.rate = 1.0; 
+            utterance.pitch = 1.2;
             synth.speak(utterance);
         }
     </script>
 </body>
-</html>
+    </html>
+    
