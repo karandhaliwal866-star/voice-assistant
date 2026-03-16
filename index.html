@@ -79,7 +79,7 @@
             status.innerText = 'Nova is thinking...';
 
             try {
-                const response = await fetch('http://192.168.1.56:5000/ask', {  // ← Change IP if yours is different
+                const response = await fetch('const response = await fetch('http://192.168.1.28:5000/ask', {  // ← Change IP if yours is different
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
