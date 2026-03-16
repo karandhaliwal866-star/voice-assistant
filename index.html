@@ -1,30 +1,121 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Voice Assistant</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            text-align: center; 
+            padding: 50px; 
+            background: linear-gradient(135deg, #007bff, #00c6ff); 
+            color: white; 
+            margin: 0;
+        }
+        h1 { font-size: 42px; margin-bottom: 10px; }
+        #mic-btn { 
+            padding: 30px 40px; 
+            font-size: 28px; 
+            border-radius: 50%; 
+            background: #ff0080; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        #mic-btn:hover { transform: scale(1.1); background: #ff4080; }
+        #status { 
+            font-size: 22px; 
+            margin-top: 30px; 
+            min-height: 40px;
+            font-weight: bold;
+        }
+        .history { 
+            max-width: 700px; 
+            margin: 40px auto; 
+            text-align: left; 
+            background: rgba(255,255,255,0.1); 
+            padding: 20px; 
+            border-radius: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .history p { margin: 10px 0; padding: 8px; border-radius: 8px; }
+        .history p:nth-child(odd) { background: rgba(255,255,255,0.2); }
+    </style>
+</head>
 <body>
-
-    <input type="text" id="user-input" placeholder="Say something to Nova...">
-    <button id="send-btn">Send to Nova</button>
-    <p id="response"></p>
+    <h1>🎙️ Nova</h1>
+    <p style="font-size:18px;">Your free Grok + Gemini Voice Assistant</p>
+    
+    <button id="mic-btn">Speak to Nova</button>
+    <p id="status">Ready to listen... (Make sure Python server is running)</p>
+    
+    <div class="history" id="history"></div>
 
     <script>
-        document.getElementById("send-btn").addEventListener("click", async () => {
-            const message = document.getElementById("user-input").value;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        const recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-IN';  // Best for Punjab
+
+        let conversationHistory = [];
+
+        const micBtn = document.getElementById('mic-btn');
+        const status = document.getElementById('status');
+        const historyDiv = document.getElementById('history');
+
+        micBtn.addEventListener('click', () => {
+            status.innerText = '🎤 Listening...';
+            micBtn.disabled = true;
+            recognition.start();
+        });
+
+        recognition.onresult = async (event) => {
+            const transcript = event.results[0][0].transcript.trim();
+            addToHistory('You: ' + transcript);
+            status.innerText = 'Nova is thinking...';
 
             try {
-                // Update this IP address whenever your phone's Wi-Fi IP changes
-                const response = await fetch("http://192.168.1.56:5000/ask", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ message: message })
+                const response = await fetch('http://192.168.1.56:5000/ask', {  // ← Change IP if yours is different
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        message: transcript,
+                        history: conversationHistory 
+                    })
                 });
 
+                if (!response.ok) throw new Error('Backend not running');
                 const data = await response.json();
-                document.getElementById("response").innerText = data.reply;
-            } catch (error) {
-                console.error("Connection failed:", error);
-                alert("Could not connect to Nova. Check Pydroid IP!");
+                
+                const utterance = new SpeechSynthesisUtterance(data.reply);
+                utterance.lang = 'en-IN';
+                window.speechSynthesis.speak(utterance);
+                
+                addToHistory('Nova: ' + data.reply);
+                status.innerText = '';
+            } catch (err) {
+                status.innerText = '❌ Error: Is the Python server running?';
+                console.error(err);
+            } finally {
+                micBtn.disabled = false;
             }
-        });
+        };
+
+        recognition.onerror = (event) => {
+            status.innerText = '❌ Listening error: ' + event.error;
+            micBtn.disabled = false;
+        };
+
+        function addToHistory(text) {
+            conversationHistory.push(text);
+            if (conversationHistory.length > 12) conversationHistory.shift();
+            historyDiv.innerHTML = conversationHistory.map(msg => `<p>${msg}</p>`).join('');
+            historyDiv.scrollTop = historyDiv.scrollHeight;
+        }
     </script>
 </body>
-</html>
+    </html>
