@@ -5,45 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nova Voice Assistant</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            text-align: center; 
-            padding: 50px; 
-            background: linear-gradient(135deg, #007bff, #00c6ff); 
-            color: white; 
-            margin: 0;
-        }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; background: linear-gradient(135deg, #007bff, #00c6ff); color: white; margin: 0; }
         h1 { font-size: 42px; margin-bottom: 10px; }
-        #mic-btn { 
-            padding: 30px 40px; 
-            font-size: 28px; 
-            border-radius: 50%; 
-            background: #ff0080; 
-            color: white; 
-            border: none; 
-            cursor: pointer; 
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
-            transition: all 0.3s;
-        }
+        #mic-btn { padding: 30px 40px; font-size: 28px; border-radius: 50%; background: #ff0080; color: white; border: none; cursor: pointer; box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
         #mic-btn:hover { transform: scale(1.1); background: #ff4080; }
-        #status { 
-            font-size: 22px; 
-            margin-top: 30px; 
-            min-height: 40px;
-            font-weight: bold;
-        }
-        .history { 
-            max-width: 700px; 
-            margin: 40px auto; 
-            text-align: left; 
-            background: rgba(255,255,255,0.1); 
-            padding: 20px; 
-            border-radius: 15px;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .history p { margin: 10px 0; padding: 8px; border-radius: 8px; }
-        .history p:nth-child(odd) { background: rgba(255,255,255,0.2); }
+        #status { font-size: 22px; margin-top: 30px; min-height: 40px; font-weight: bold; }
+        .history { max-width: 700px; margin: 40px auto; text-align: left; background: rgba(255,255,255,0.1); padding: 20px; border-radius: 15px; max-height: 400px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -51,7 +18,7 @@
     <p style="font-size:18px;">Your free Grok + Gemini Voice Assistant</p>
     
     <button id="mic-btn">Speak to Nova</button>
-    <p id="status">Ready to listen... (Make sure Python server is running)</p>
+    <p id="status">Ready to listen... (Python server must be running)</p>
     
     <div class="history" id="history"></div>
 
@@ -59,7 +26,7 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         const recognition = new SpeechRecognition();
         recognition.continuous = false;
-        recognition.lang = 'en-IN';  // Best for Punjab
+        recognition.lang = 'en-IN';
 
         let conversationHistory = [];
 
@@ -79,13 +46,11 @@
             status.innerText = 'Nova is thinking...';
 
             try {
-                const response = await fetch('const response = await fetch('http://192.168.1.28:5000/ask', {  // ← Change IP if yours is different
+                // ←←←← YOUR CURRENT IP IS HERE (change only if Pydroid shows different IP)
+                const response = await fetch('http://192.168.1.28:5000/ask', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        message: transcript,
-                        history: conversationHistory 
-                    })
+                    body: JSON.stringify({ message: transcript, history: conversationHistory })
                 });
 
                 if (!response.ok) throw new Error('Backend not running');
@@ -98,16 +63,10 @@
                 addToHistory('Nova: ' + data.reply);
                 status.innerText = '';
             } catch (err) {
-                status.innerText = '❌ Error: Is the Python server running?';
-                console.error(err);
+                status.innerText = '❌ Error: Check if Pydroid server is still running';
             } finally {
                 micBtn.disabled = false;
             }
-        };
-
-        recognition.onerror = (event) => {
-            status.innerText = '❌ Listening error: ' + event.error;
-            micBtn.disabled = false;
         };
 
         function addToHistory(text) {
@@ -118,4 +77,4 @@
         }
     </script>
 </body>
-    </html>
+</html>
