@@ -6,88 +6,127 @@
     <title>Nova - Voice Assistant</title>
     <style>
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, sans-serif;
             text-align: center;
             padding: 40px 20px;
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             color: #ffffff;
             margin: 0;
             min-height: 100vh;
+            overflow: hidden;
         }
         h1 {
-            font-size: 52px;
-            margin: 10px 0 5px;
-            text-shadow: 0 0 20px rgba(0, 191, 255, 0.8);
+            font-size: 56px;
+            margin: 15px 0 8px;
+            text-shadow: 0 0 25px rgba(0, 191, 255, 0.9);
         }
         .subtitle {
-            font-size: 18px;
-            opacity: 0.8;
+            font-size: 19px;
+            opacity: 0.85;
             margin-bottom: 30px;
         }
-        #mic-btn, #deactivate-btn {
-            padding: 18px 40px;
+
+        /* Glowing Orb */
+        .orb {
+            width: 180px;
+            height: 180px;
+            margin: 30px auto;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.9), #00b8ff 40%, #0077ff);
+            box-shadow: 
+                0 0 60px #00b8ff,
+                0 0 120px #0077ff,
+                inset 0 0 40px rgba(255,255,255,0.8);
+            transition: all 0.6s ease;
+        }
+
+        .orb.listening {
+            background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.95), #00ff9d 40%, #00cc66);
+            box-shadow: 
+                0 0 80px #00ff9d,
+                0 0 160px #00cc66,
+                inset 0 0 50px rgba(255,255,255,0.9);
+            animation: pulse-listen 1.2s infinite ease-in-out;
+        }
+
+        .orb.thinking {
+            background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.9), #ffaa00 40%, #ff6600);
+            box-shadow: 
+                0 0 70px #ffaa00,
+                0 0 140px #ff8800,
+                inset 0 0 45px rgba(255,255,255,0.8);
+            animation: pulse-think 1.5s infinite ease-in-out;
+        }
+
+        .orb.speaking {
+            background: radial-gradient(circle at 40% 30%, rgba(255,255,255,0.95), #c44dff 40%, #9900ff);
+            box-shadow: 
+                0 0 85px #c44dff,
+                0 0 170px #aa44ff,
+                inset 0 0 55px rgba(255,255,255,0.9);
+            animation: pulse-speak 0.8s infinite ease-in-out;
+        }
+
+        @keyframes pulse-listen {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.12); }
+        }
+        @keyframes pulse-think {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        @keyframes pulse-speak {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.15); }
+        }
+
+        button {
+            padding: 18px 45px;
             font-size: 24px;
             border-radius: 50px;
-            margin: 10px;
+            margin: 12px;
             border: none;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
         }
         #mic-btn {
             background: linear-gradient(45deg, #00ff9d, #00b8ff);
             color: #000;
         }
-        #mic-btn:hover {
-            transform: scale(1.08);
-            box-shadow: 0 12px 30px rgba(0, 255, 157, 0.6);
-        }
+        #mic-btn:hover { transform: scale(1.08); }
         #deactivate-btn {
             background: #ff2d55;
             color: white;
-            display: none; /* Hidden by default */
+            display: none;
         }
-        #deactivate-btn:hover {
-            background: #ff4d6b;
-            transform: scale(1.05);
-        }
+        #deactivate-btn:hover { background: #ff4d6b; transform: scale(1.05); }
+
         #status {
-            font-size: 22px;
-            margin: 30px 0;
-            min-height: 50px;
+            font-size: 23px;
+            margin: 25px 0;
+            min-height: 55px;
             font-weight: bold;
-            text-shadow: 0 0 10px rgba(255,255,255,0.5);
         }
         .history {
             max-width: 720px;
             margin: 40px auto;
             text-align: left;
             background: rgba(255,255,255,0.08);
-            padding: 20px;
+            padding: 22px;
             border-radius: 20px;
-            max-height: 420px;
+            max-height: 450px;
             overflow-y: auto;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .history p {
-            margin: 12px 0;
-            padding: 10px 14px;
-            border-radius: 12px;
-            background: rgba(255,255,255,0.1);
-        }
-        .listening {
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.08); }
-            100% { transform: scale(1); }
+            border: 1px solid rgba(255,255,255,0.15);
         }
     </style>
 </head>
 <body>
     <h1>🎙️ Nova</h1>
     <p class="subtitle">Intelligent Voice Assistant</p>
+    
+    <!-- Glowing Orb -->
+    <div id="orb" class="orb"></div>
     
     <button id="mic-btn">Activate Nova</button>
     <button id="deactivate-btn">Deactivate Nova</button>
@@ -109,14 +148,19 @@
         const deactivateBtn = document.getElementById('deactivate-btn');
         const status = document.getElementById('status');
         const historyDiv = document.getElementById('history');
+        const orb = document.getElementById('orb');
+
+        function setOrbState(state) {
+            orb.className = 'orb ' + state;
+        }
 
         function toggleActivate() {
             if (!isActive) {
                 isActive = true;
                 micBtn.style.display = 'none';
                 deactivateBtn.style.display = 'inline-block';
-                status.innerText = '✅ Nova Activated • Say something...';
-                status.classList.add('listening');
+                status.innerText = '✅ Nova Activated';
+                setOrbState('listening');
                 startListening();
             }
         }
@@ -126,13 +170,14 @@
             micBtn.style.display = 'inline-block';
             deactivateBtn.style.display = 'none';
             status.innerText = 'Deactivated • Tap Activate to restart';
-            status.classList.remove('listening');
-            window.speechSynthesis.cancel(); // Stop any speaking
+            setOrbState('');
+            window.speechSynthesis.cancel();
         }
 
         function startListening() {
             if (!isActive) return;
             status.innerText = '🎤 Listening...';
+            setOrbState('listening');
             recognition.start();
         }
 
@@ -143,10 +188,10 @@
             const transcript = event.results[0][0].transcript.trim();
             addToHistory('You: ' + transcript);
             status.innerText = 'Nova is thinking...';
+            setOrbState('thinking');
 
             try {
-                // ←←← CHANGE THIS LINE WITH YOUR NGROK URL
-                const response = await fetch('https://YOUR_NGROK_URL_HERE.ngrok-free.app/ask', {
+                const response = await fetch('http://192.168.1.64:5000/ask', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
@@ -158,28 +203,28 @@
                 if (!response.ok) throw new Error('Backend error');
                 const data = await response.json();
                 
+                status.innerText = 'Nova is speaking...';
+                setOrbState('speaking');
+
                 const utterance = new SpeechSynthesisUtterance(data.reply);
                 utterance.lang = 'en-IN';
                 utterance.pitch = 0.95;
-                utterance.rate = 0.92;
+                utterance.rate = 0.93;
                 window.speechSynthesis.speak(utterance);
                 
                 addToHistory('Nova: ' + data.reply);
-                status.innerText = '✅ Nova Activated • Say something...';
                 
-                // Auto listen again after reply
+                // Auto listen again after speaking
                 if (isActive) {
-                    setTimeout(startListening, 800);
+                    setTimeout(() => {
+                        status.innerText = '✅ Nova Activated';
+                        setOrbState('listening');
+                        startListening();
+                    }, 1200);
                 }
             } catch (err) {
                 status.innerText = '❌ Connection error • Check nova_brain.py';
-                console.error(err);
-            }
-        };
-
-        recognition.onerror = () => {
-            if (isActive) {
-                setTimeout(startListening, 1000);
+                setOrbState('');
             }
         };
 
