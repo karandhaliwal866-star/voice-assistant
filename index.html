@@ -9,60 +9,55 @@
 
         body { 
             background: #020210; 
-            /* This ensures the stars stay still */
-            background-image: url('1776185658997.png');
+            /* LOCK THE BACKGROUND IMAGE HERE */
+            background-image: url('1776185658997.png'); 
             background-size: cover;
             background-position: center;
+            background-attachment: fixed;
             height: 100vh; width: 100vw; 
             overflow: hidden;
             display: flex; justify-content: center; align-items: center;
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* THE ORB CONTAINER - This is what moves */
+        /* THE ROBOT CONTAINER - Only this part will move */
         #nova-stage { 
             position: relative;
-            width: 400px; height: 400px;
+            width: 100%; height: 100%;
             z-index: 10;
-            transition: transform 1.5s ease-in-out;
-            /* Creates a perfect circle around the shield */
-            clip-path: circle(50% at 50% 50%); 
         }
 
         .layer { 
             position: absolute; width: 100%; height: 100%; 
-            background-size: cover; background-repeat: no-repeat; background-position: center;
-            opacity: 0; transition: opacity 0.4s ease;
+            /* contain ensures the robot doesn't get cut off */
+            background-size: contain; 
+            background-repeat: no-repeat; 
+            background-position: center;
+            opacity: 0; transition: opacity 0.5s ease;
         }
 
-        /* --- FILENAMES --- */
+        /* --- MAPPING YOUR FILES --- */
         #charging { background-image: url('1776185658997.png'); opacity: 1; }
         #shatter { background-image: url('1776185647325.png'); }
-        #listening { background-image: url('1776257419064.png'); }
-        #thinking { background-image: url('1776257407074.png'); }
         #talking { background-image: url('1776257394473.png'); }
+        #thinking { background-image: url('1776257407074.png'); }
+        #listening { background-image: url('1776257419064.png'); }
 
-        /* FLOATING ANIMATION */
-        @keyframes robotDrift {
+        /* DRIVING THE ROBOT (Only Nova moves, not the stars) */
+        @keyframes robotOnlyDrift {
             0%, 100% { transform: translate(0, 0); }
-            33% { transform: translate(30px, -40px); }
-            66% { transform: translate(-30px, 20px); }
+            50% { transform: translate(20px, -30px); }
         }
-        .floating { animation: robotDrift 8s infinite ease-in-out; }
+        .floating { animation: robotOnlyDrift 7s infinite ease-in-out; }
 
-        /* UI BUTTONS */
-        #ui { position: fixed; bottom: 40px; z-index: 100; display: flex; gap: 15px; }
+        #ui { position: fixed; bottom: 40px; z-index: 100; display: flex; gap: 10px; }
         
         button { 
             padding: 12px 25px; border-radius: 50px; border: 2px solid #00d2ff; 
-            background: rgba(0, 0, 0, 0.7); color: #00d2ff; 
+            background: rgba(0, 0, 0, 0.85); color: #00d2ff; 
             cursor: pointer; font-weight: bold; text-transform: uppercase;
-            box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
         }
-
-        #act-btn { border-color: #00d2ff; color: #00d2ff; }
-        #deact-btn { border-color: #ff4444; color: #ff4444; display: none; }
-        #ask-btn { border-color: #bb86fc; color: #bb86fc; display: none; }
     </style>
 </head>
 <body>
@@ -77,61 +72,63 @@
 
     <div id="ui">
         <button id="act-btn" onclick="activate()">Activate Nova</button>
-        <button id="ask-btn" onclick="askNova()">Ask Nova</button>
-        <button id="deact-btn" onclick="deactivate()">Deactivate</button>
+        <button id="ask-btn" onclick="askNova()" style="display:none;">Ask Nova</button>
+        <button id="deact-btn" onclick="deactivate()" style="display:none;">Deactivate</button>
     </div>
 
     <script>
         const layers = document.querySelectorAll('.layer');
         const stage = document.getElementById('nova-stage');
-        const btnAct = document.getElementById('act-btn');
-        const btnDeact = document.getElementById('deact-btn');
-        const btnAsk = document.getElementById('ask-btn');
 
         function setLayer(id) {
             layers.forEach(l => l.style.opacity = "0");
             document.getElementById(id).style.opacity = "1";
         }
 
+        function speak(text, callback) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0; 
+            utterance.pitch = 1.1; 
+            utterance.onend = callback;
+            window.speechSynthesis.speak(utterance);
+        }
+
         function activate() {
-            setLayer('shatter'); // Show cracking shield
-            btnAct.style.display = "none";
-            
-            setTimeout(() => {
-                setLayer('listening'); // Robot comes out
+            setLayer('shatter'); // Cracks appear
+            document.getElementById('act-btn').style.display = "none";
+            speak("Nova system active.", () => {
+                setLayer('listening');
                 stage.classList.add('floating');
-                btnDeact.style.display = "block";
-                btnAsk.style.display = "block";
-            }, 1000);
+                document.getElementById('ask-btn').style.display = "block";
+                document.getElementById('deact-btn').style.display = "block";
+            });
         }
 
         function deactivate() {
             stage.classList.remove('floating');
-            setLayer('charging'); // Back into shield
-            btnAct.style.display = "block";
-            btnDeact.style.display = "none";
-            btnAsk.style.display = "none";
+            speak("Entering sleep mode.", () => {
+                setLayer('charging'); // Back to full shield
+                document.getElementById('act-btn').style.display = "block";
+                document.getElementById('ask-btn').style.display = "none";
+                document.getElementById('deact-btn').style.display = "none";
+            });
         }
 
         function askNova() {
-            // STOP floating to listen
             stage.style.animationPlayState = "paused";
             setLayer('listening');
-
+            
             setTimeout(() => {
-                setLayer('thinking'); // Switching to thinking image
-                
+                setLayer('thinking');
                 setTimeout(() => {
-                    setLayer('talking'); // Switching to talking image
-                    
-                    setTimeout(() => {
-                        setLayer('listening'); // Back to idle
-                        stage.style.animationPlayState = "running"; // Continue floating
-                    }, 4000); // Speaking duration
-                }, 2000); // Thinking duration
-            }, 2000); // Listening duration
+                    setLayer('talking');
+                    speak("I am here to help you. What would you like to know today?", () => {
+                        setLayer('listening');
+                        stage.style.animationPlayState = "running";
+                    });
+                }, 2000);
+            }, 2000);
         }
     </script>
 </body>
-    </html>
-    
+</html>
