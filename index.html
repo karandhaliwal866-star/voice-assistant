@@ -2,112 +2,129 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Nova - Advanced Interaction</title>
+    <title>Nova AI - Gesture Interface</title>
     <style>
-        body { margin: 0; background: #020210; overflow: hidden; font-family: sans-serif; height: 100vh; display: flex; justify-content: center; align-items: center; }
+        body { 
+            margin: 0; background: #020210; overflow: hidden; 
+            display: flex; justify-content: center; align-items: center; height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-        #nova-stage { position: relative; width: 450px; height: 450px; transition: all 2s ease-in-out; }
+        #nova-stage { position: relative; width: 450px; height: 450px; transition: 1s ease-in-out; }
 
-        /* Layers for images */
-        .nova-layer { position: absolute; width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; transition: opacity 0.3s; }
+        .layer { 
+            position: absolute; width: 100%; height: 100%; 
+            background-size: contain; background-repeat: no-repeat; background-position: center;
+            opacity: 0; transition: opacity 0.4s ease;
+        }
 
-        /* Current Files on your GitHub */
-        #charging { background-image: url('1776185647325.png'); z-index: 10; }
-        #shatter { background-image: url('1776185658997.png'); opacity: 0; z-index: 11; }
-
-        /* NEW GESTURE SLOTS (Add your filenames here later) */
-        #listening { background-image: url('listening.png'); opacity: 0; z-index: 12; }
-        #thinking { background-image: url('thinking.png'); opacity: 0; z-index: 13; }
-        #talking { background-image: url('talking.png'); opacity: 0; z-index: 14; }
+        /* --- YOUR UPDATED FILENAMES --- */
+        #charging { background-image: url('1776185658997.png'); opacity: 1; }
+        #shatter { background-image: url('1776185647325.png'); }
+        #talking { background-image: url('1776257394473.png'); }
+        #listening { background-image: url('1776257419064.png'); }
+        #thinking { background-image: url('1776257407074.png'); }
 
         /* Floating Animation */
         @keyframes drift {
             0%, 100% { transform: translate(0,0); }
-            25% { transform: translate(100px, -100px); }
-            50% { transform: translate(-100px, 50px); }
-            75% { transform: translate(80px, 80px); }
+            25% { transform: translate(50px, -70px); }
+            50% { transform: translate(-50px, 40px); }
         }
-
         .floating { animation: drift 12s infinite ease-in-out; }
-        .stopped { animation-play-state: paused !important; }
+        .paused { animation-play-state: paused; }
 
-        /* UI */
-        #controls { position: fixed; bottom: 30px; text-align: center; width: 100%; }
-        button { padding: 12px 25px; border-radius: 50px; border: 2px solid #00d2ff; background: none; color: #00d2ff; cursor: pointer; font-weight: bold; }
-        #status-box { color: #00d2ff; margin-bottom: 10px; font-family: monospace; }
+        /* UI Styling */
+        #ui { position: fixed; bottom: 40px; text-align: center; width: 100%; }
+        #status { color: #00d2ff; margin-bottom: 15px; letter-spacing: 2px; text-shadow: 0 0 10px #00d2ff; font-weight: bold; }
+        button { 
+            padding: 15px 35px; border-radius: 50px; border: 2px solid #00d2ff; 
+            background: rgba(0, 210, 255, 0.1); color: #00d2ff; cursor: pointer; 
+            font-weight: bold; text-transform: uppercase; transition: 0.3s;
+        }
+        button:hover { background: #00d2ff; color: #000; box-shadow: 0 0 20px #00d2ff; }
     </style>
 </head>
 <body>
 
     <div id="nova-stage">
-        <div id="charging" class="nova-layer"></div>
-        <div id="shatter" class="nova-layer"></div>
-        <div id="listening" class="nova-layer"></div>
-        <div id="thinking" class="nova-layer"></div>
-        <div id="talking" class="nova-layer"></div>
+        <div id="charging" class="layer"></div>
+        <div id="shatter" class="layer"></div>
+        <div id="talking" class="layer"></div>
+        <div id="listening" class="layer"></div>
+        <div id="thinking" class="layer"></div>
     </div>
 
-    <div id="controls">
-        <div id="status-box">> SYSTEM READY</div>
-        <button id="main-btn" onclick="handleNova()">ACTIVATE NOVA</button>
+    <div id="ui">
+        <div id="status">CORE CHARGING...</div>
+        <button id="btn" onclick="runNovaSequence()">Activate Nova</button>
     </div>
 
     <script>
-        let state = "OFF"; // OFF, IDLE, LISTENING, THINKING, TALKING
+        const layers = {
+            charging: document.getElementById('charging'),
+            shatter: document.getElementById('shatter'),
+            talking: document.getElementById('talking'),
+            listening: document.getElementById('listening'),
+            thinking: document.getElementById('thinking')
+        };
         const stage = document.getElementById('nova-stage');
-        const status = document.getElementById('status-box');
+        const status = document.getElementById('status');
+        const btn = document.getElementById('btn');
+        let mode = "OFF"; // OFF, ACTIVE
 
-        function hideAll() {
-            document.querySelectorAll('.nova-layer').forEach(l => l.style.opacity = 0);
+        function clearLayers() {
+            Object.values(layers).forEach(l => l.style.opacity = "0");
         }
 
-        function handleNova() {
-            if (state === "OFF") {
-                // ACTIVATE & SHATTER
-                state = "IDLE";
-                document.getElementById('shatter').style.opacity = 1;
+        function runNovaSequence() {
+            if (mode === "OFF") {
+                // 1. SHATTER SEQUENCE
+                mode = "ACTIVE";
+                clearLayers();
+                layers.shatter.style.opacity = "1";
+                status.innerText = "SHIELD BREAKING...";
+
                 setTimeout(() => {
-                    document.getElementById('shatter').style.opacity = 0;
-                    document.getElementById('charging').style.opacity = 0;
-                    // For now, we use charging as the idle face until you upload the others
-                    document.getElementById('listening').style.opacity = 1; 
+                    // 2. GO TO IDLE (Listening face)
+                    clearLayers();
+                    layers.listening.style.opacity = "1";
                     stage.classList.add('floating');
-                }, 800);
-                status.innerText = "> NOVA ONLINE";
-                document.getElementById('main-btn').innerText = "ASK SOMETHING";
-            } else if (state === "IDLE") {
-                simulateInteraction();
-            }
-        }
+                    status.innerText = "NOVA ONLINE";
+                    btn.innerText = "Ask Nova";
+                }, 1000);
+            } 
+            else {
+                // 3. GESTURE INTERACTION
+                stage.classList.add('paused');
+                
+                // Listening Phase
+                clearLayers();
+                layers.listening.style.opacity = "1";
+                status.innerText = "LISTENING...";
 
-        function simulateInteraction() {
-            // 1. LISTENING
-            state = "LISTENING";
-            stage.classList.add('stopped');
-            hideAll(); document.getElementById('listening').style.opacity = 1;
-            status.innerText = "> LISTENING...";
-
-            // 2. THINKING (Simulated 2 second delay)
-            setTimeout(() => {
-                state = "THINKING";
-                hideAll(); document.getElementById('thinking').style.opacity = 1;
-                status.innerText = "> THINKING...";
-
-                // 3. TALKING
                 setTimeout(() => {
-                    state = "TALKING";
-                    hideAll(); document.getElementById('talking').style.opacity = 1;
-                    status.innerText = "> NOVA IS RESPONDING";
-                    
-                    // After talking, go back to floating
+                    // Thinking Phase
+                    clearLayers();
+                    layers.thinking.style.opacity = "1";
+                    status.innerText = "THINKING...";
+
                     setTimeout(() => {
-                        state = "IDLE";
-                        hideAll(); document.getElementById('listening').style.opacity = 1;
-                        stage.classList.remove('stopped');
-                        status.innerText = "> NOVA ONLINE";
-                    }, 3000);
-                }, 2000);
-            }, 2000);
+                        // Talking Phase
+                        clearLayers();
+                        layers.talking.style.opacity = "1";
+                        status.innerText = "NOVA RESPONDING...";
+
+                        setTimeout(() => {
+                            // Back to Floating
+                            clearLayers();
+                            layers.listening.style.opacity = "1";
+                            stage.classList.remove('paused');
+                            status.innerText = "NOVA ONLINE";
+                        }, 4000); // Talks for 4 seconds
+                    }, 2000); // Thinks for 2 seconds
+                }, 2000); // Listens for 2 seconds
+            }
         }
     </script>
 </body>
