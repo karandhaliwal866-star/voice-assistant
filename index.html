@@ -1,96 +1,113 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Nova Core - Immersive Animation</title>
+    <meta charset="UTF-8">
+    <title>Nova - Advanced Interaction</title>
     <style>
-        /* --- STYLE SECTION (This is your CSS) --- */
-        body {
-            margin: 0; background: #020210; overflow: hidden;
-            display: flex; justify-content: center; align-items: center; height: 100vh;
+        body { margin: 0; background: #020210; overflow: hidden; font-family: sans-serif; height: 100vh; display: flex; justify-content: center; align-items: center; }
+
+        #nova-stage { position: relative; width: 450px; height: 450px; transition: all 2s ease-in-out; }
+
+        /* Layers for images */
+        .nova-layer { position: absolute; width: 100%; height: 100%; background-position: center; background-size: contain; background-repeat: no-repeat; transition: opacity 0.3s; }
+
+        /* Current Files on your GitHub */
+        #charging { background-image: url('1776185647325.png'); z-index: 10; }
+        #shatter { background-image: url('1776185658997.png'); opacity: 0; z-index: 11; }
+
+        /* NEW GESTURE SLOTS (Add your filenames here later) */
+        #listening { background-image: url('listening.png'); opacity: 0; z-index: 12; }
+        #thinking { background-image: url('thinking.png'); opacity: 0; z-index: 13; }
+        #talking { background-image: url('talking.png'); opacity: 0; z-index: 14; }
+
+        /* Floating Animation */
+        @keyframes drift {
+            0%, 100% { transform: translate(0,0); }
+            25% { transform: translate(100px, -100px); }
+            50% { transform: translate(-100px, 50px); }
+            75% { transform: translate(80px, 80px); }
         }
 
-        #nova-hub {
-            position: relative; width: 400px; height: 400px;
-            transition: all 2s ease-in-out;
-        }
+        .floating { animation: drift 12s infinite ease-in-out; }
+        .stopped { animation-play-state: paused !important; }
 
-        /* The Charging Shield (Image 1) */
-        #shield-charging {
-            position: absolute; width: 100%; height: 100%;
-            background: url('1000175041.png') center/contain no-repeat;
-            animation: pulse 2s infinite alternate;
-        }
-
-        /* The Shatter Frame (Image 2) - Hidden by default */
-        #shield-shatter {
-            position: absolute; width: 100%; height: 100%;
-            background: url('1000175040.png') center/contain no-repeat;
-            opacity: 0; transform: scale(0.8);
-            pointer-events: none;
-        }
-
-        /* The Robot Character */
-        #robot {
-            position: absolute; width: 120px; top: 50%; left: 50%;
-            transform: translate(-50%, -50%); z-index: 10;
-        }
-
-        /* --- THE ANIMATIONS --- */
-        @keyframes pulse {
-            from { opacity: 0.7; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1.03); }
-        }
-
-        /* Floating Movement Animation */
-        @keyframes spaceFloat {
-            0% { transform: translate(-50%, -50%); }
-            25% { transform: translate(100px, -150px) rotate(10deg); }
-            50% { transform: translate(-150px, 50px) rotate(-10deg); }
-            75% { transform: translate(120px, 100px) rotate(5deg); }
-            100% { transform: translate(-50%, -50%); }
-        }
-
-        /* Classes controlled by JavaScript */
-        .is-active #shield-charging { display: none; }
-        .is-active #shield-shatter { opacity: 1; transform: scale(1.2); transition: 0.3s; opacity: 0; }
-        .is-active #robot { animation: spaceFloat 10s infinite ease-in-out; }
-
-        /* Button UI */
-        #action-btn {
-            position: fixed; bottom: 40px; padding: 15px 30px;
-            background: none; border: 2px solid #00d2ff; color: #00d2ff;
-            border-radius: 50px; cursor: pointer; font-weight: bold;
-        }
+        /* UI */
+        #controls { position: fixed; bottom: 30px; text-align: center; width: 100%; }
+        button { padding: 12px 25px; border-radius: 50px; border: 2px solid #00d2ff; background: none; color: #00d2ff; cursor: pointer; font-weight: bold; }
+        #status-box { color: #00d2ff; margin-bottom: 10px; font-family: monospace; }
     </style>
 </head>
 <body>
 
-    <div id="nova-hub">
-        <div id="shield-charging"></div>
-        <div id="shield-shatter"></div>
-        <img id="robot" src="robot.png" alt="Nova">
+    <div id="nova-stage">
+        <div id="charging" class="nova-layer"></div>
+        <div id="shatter" class="nova-layer"></div>
+        <div id="listening" class="nova-layer"></div>
+        <div id="thinking" class="nova-layer"></div>
+        <div id="talking" class="nova-layer"></div>
     </div>
 
-    <button id="action-btn" onclick="toggleNova()">ACTIVATE NOVA</button>
+    <div id="controls">
+        <div id="status-box">> SYSTEM READY</div>
+        <button id="main-btn" onclick="handleNova()">ACTIVATE NOVA</button>
+    </div>
 
     <script>
-        let active = false;
-        function toggleNova() {
-            const hub = document.getElementById('nova-hub');
-            const btn = document.getElementById('action-btn');
-            active = !active;
+        let state = "OFF"; // OFF, IDLE, LISTENING, THINKING, TALKING
+        const stage = document.getElementById('nova-stage');
+        const status = document.getElementById('status-box');
 
-            if (active) {
-                hub.classList.add('is-active');
-                btn.innerText = "DEACTIVATE NOVA";
-                btn.style.borderColor = "#ff00ff";
-                btn.style.color = "#ff00ff";
-            } else {
-                hub.classList.remove('is-active');
-                btn.innerText = "ACTIVATE NOVA";
-                btn.style.borderColor = "#00d2ff";
-                btn.style.color = "#00d2ff";
+        function hideAll() {
+            document.querySelectorAll('.nova-layer').forEach(l => l.style.opacity = 0);
+        }
+
+        function handleNova() {
+            if (state === "OFF") {
+                // ACTIVATE & SHATTER
+                state = "IDLE";
+                document.getElementById('shatter').style.opacity = 1;
+                setTimeout(() => {
+                    document.getElementById('shatter').style.opacity = 0;
+                    document.getElementById('charging').style.opacity = 0;
+                    // For now, we use charging as the idle face until you upload the others
+                    document.getElementById('listening').style.opacity = 1; 
+                    stage.classList.add('floating');
+                }, 800);
+                status.innerText = "> NOVA ONLINE";
+                document.getElementById('main-btn').innerText = "ASK SOMETHING";
+            } else if (state === "IDLE") {
+                simulateInteraction();
             }
+        }
+
+        function simulateInteraction() {
+            // 1. LISTENING
+            state = "LISTENING";
+            stage.classList.add('stopped');
+            hideAll(); document.getElementById('listening').style.opacity = 1;
+            status.innerText = "> LISTENING...";
+
+            // 2. THINKING (Simulated 2 second delay)
+            setTimeout(() => {
+                state = "THINKING";
+                hideAll(); document.getElementById('thinking').style.opacity = 1;
+                status.innerText = "> THINKING...";
+
+                // 3. TALKING
+                setTimeout(() => {
+                    state = "TALKING";
+                    hideAll(); document.getElementById('talking').style.opacity = 1;
+                    status.innerText = "> NOVA IS RESPONDING";
+                    
+                    // After talking, go back to floating
+                    setTimeout(() => {
+                        state = "IDLE";
+                        hideAll(); document.getElementById('listening').style.opacity = 1;
+                        stage.classList.remove('stopped');
+                        status.innerText = "> NOVA ONLINE";
+                    }, 3000);
+                }, 2000);
+            }, 2000);
         }
     </script>
 </body>
