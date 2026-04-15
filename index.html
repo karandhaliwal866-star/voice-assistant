@@ -2,47 +2,67 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Nova AI - Gesture Interface</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova AI Assistant</title>
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
         body { 
-            margin: 0; background: #020210; overflow: hidden; 
-            display: flex; justify-content: center; align-items: center; height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #020210; 
+            /* This ensures the stars stay still */
+            background-image: url('1776185658997.png');
+            background-size: cover;
+            background-position: center;
+            height: 100vh; width: 100vw; 
+            overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Segoe UI', sans-serif;
         }
 
-        #nova-stage { position: relative; width: 450px; height: 450px; transition: 1s ease-in-out; }
+        /* THE ORB CONTAINER - This is what moves */
+        #nova-stage { 
+            position: relative;
+            width: 400px; height: 400px;
+            z-index: 10;
+            transition: transform 1.5s ease-in-out;
+            /* Creates a perfect circle around the shield */
+            clip-path: circle(50% at 50% 50%); 
+        }
 
         .layer { 
             position: absolute; width: 100%; height: 100%; 
-            background-size: contain; background-repeat: no-repeat; background-position: center;
+            background-size: cover; background-repeat: no-repeat; background-position: center;
             opacity: 0; transition: opacity 0.4s ease;
         }
 
-        /* --- YOUR UPDATED FILENAMES --- */
+        /* --- FILENAMES --- */
         #charging { background-image: url('1776185658997.png'); opacity: 1; }
         #shatter { background-image: url('1776185647325.png'); }
-        #talking { background-image: url('1776257394473.png'); }
         #listening { background-image: url('1776257419064.png'); }
         #thinking { background-image: url('1776257407074.png'); }
+        #talking { background-image: url('1776257394473.png'); }
 
-        /* Floating Animation */
-        @keyframes drift {
-            0%, 100% { transform: translate(0,0); }
-            25% { transform: translate(50px, -70px); }
-            50% { transform: translate(-50px, 40px); }
+        /* FLOATING ANIMATION */
+        @keyframes robotDrift {
+            0%, 100% { transform: translate(0, 0); }
+            33% { transform: translate(30px, -40px); }
+            66% { transform: translate(-30px, 20px); }
         }
-        .floating { animation: drift 12s infinite ease-in-out; }
-        .paused { animation-play-state: paused; }
+        .floating { animation: robotDrift 8s infinite ease-in-out; }
 
-        /* UI Styling */
-        #ui { position: fixed; bottom: 40px; text-align: center; width: 100%; }
-        #status { color: #00d2ff; margin-bottom: 15px; letter-spacing: 2px; text-shadow: 0 0 10px #00d2ff; font-weight: bold; }
+        /* UI BUTTONS */
+        #ui { position: fixed; bottom: 40px; z-index: 100; display: flex; gap: 15px; }
+        
         button { 
-            padding: 15px 35px; border-radius: 50px; border: 2px solid #00d2ff; 
-            background: rgba(0, 210, 255, 0.1); color: #00d2ff; cursor: pointer; 
-            font-weight: bold; text-transform: uppercase; transition: 0.3s;
+            padding: 12px 25px; border-radius: 50px; border: 2px solid #00d2ff; 
+            background: rgba(0, 0, 0, 0.7); color: #00d2ff; 
+            cursor: pointer; font-weight: bold; text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.3);
         }
-        button:hover { background: #00d2ff; color: #000; box-shadow: 0 0 20px #00d2ff; }
+
+        #act-btn { border-color: #00d2ff; color: #00d2ff; }
+        #deact-btn { border-color: #ff4444; color: #ff4444; display: none; }
+        #ask-btn { border-color: #bb86fc; color: #bb86fc; display: none; }
     </style>
 </head>
 <body>
@@ -50,82 +70,68 @@
     <div id="nova-stage">
         <div id="charging" class="layer"></div>
         <div id="shatter" class="layer"></div>
-        <div id="talking" class="layer"></div>
         <div id="listening" class="layer"></div>
         <div id="thinking" class="layer"></div>
+        <div id="talking" class="layer"></div>
     </div>
 
     <div id="ui">
-        <div id="status">CORE CHARGING...</div>
-        <button id="btn" onclick="runNovaSequence()">Activate Nova</button>
+        <button id="act-btn" onclick="activate()">Activate Nova</button>
+        <button id="ask-btn" onclick="askNova()">Ask Nova</button>
+        <button id="deact-btn" onclick="deactivate()">Deactivate</button>
     </div>
 
     <script>
-        const layers = {
-            charging: document.getElementById('charging'),
-            shatter: document.getElementById('shatter'),
-            talking: document.getElementById('talking'),
-            listening: document.getElementById('listening'),
-            thinking: document.getElementById('thinking')
-        };
+        const layers = document.querySelectorAll('.layer');
         const stage = document.getElementById('nova-stage');
-        const status = document.getElementById('status');
-        const btn = document.getElementById('btn');
-        let mode = "OFF"; // OFF, ACTIVE
+        const btnAct = document.getElementById('act-btn');
+        const btnDeact = document.getElementById('deact-btn');
+        const btnAsk = document.getElementById('ask-btn');
 
-        function clearLayers() {
-            Object.values(layers).forEach(l => l.style.opacity = "0");
+        function setLayer(id) {
+            layers.forEach(l => l.style.opacity = "0");
+            document.getElementById(id).style.opacity = "1";
         }
 
-        function runNovaSequence() {
-            if (mode === "OFF") {
-                // 1. SHATTER SEQUENCE
-                mode = "ACTIVE";
-                clearLayers();
-                layers.shatter.style.opacity = "1";
-                status.innerText = "SHIELD BREAKING...";
+        function activate() {
+            setLayer('shatter'); // Show cracking shield
+            btnAct.style.display = "none";
+            
+            setTimeout(() => {
+                setLayer('listening'); // Robot comes out
+                stage.classList.add('floating');
+                btnDeact.style.display = "block";
+                btnAsk.style.display = "block";
+            }, 1000);
+        }
 
-                setTimeout(() => {
-                    // 2. GO TO IDLE (Listening face)
-                    clearLayers();
-                    layers.listening.style.opacity = "1";
-                    stage.classList.add('floating');
-                    status.innerText = "NOVA ONLINE";
-                    btn.innerText = "Ask Nova";
-                }, 1000);
-            } 
-            else {
-                // 3. GESTURE INTERACTION
-                stage.classList.add('paused');
+        function deactivate() {
+            stage.classList.remove('floating');
+            setLayer('charging'); // Back into shield
+            btnAct.style.display = "block";
+            btnDeact.style.display = "none";
+            btnAsk.style.display = "none";
+        }
+
+        function askNova() {
+            // STOP floating to listen
+            stage.style.animationPlayState = "paused";
+            setLayer('listening');
+
+            setTimeout(() => {
+                setLayer('thinking'); // Switching to thinking image
                 
-                // Listening Phase
-                clearLayers();
-                layers.listening.style.opacity = "1";
-                status.innerText = "LISTENING...";
-
                 setTimeout(() => {
-                    // Thinking Phase
-                    clearLayers();
-                    layers.thinking.style.opacity = "1";
-                    status.innerText = "THINKING...";
-
+                    setLayer('talking'); // Switching to talking image
+                    
                     setTimeout(() => {
-                        // Talking Phase
-                        clearLayers();
-                        layers.talking.style.opacity = "1";
-                        status.innerText = "NOVA RESPONDING...";
-
-                        setTimeout(() => {
-                            // Back to Floating
-                            clearLayers();
-                            layers.listening.style.opacity = "1";
-                            stage.classList.remove('paused');
-                            status.innerText = "NOVA ONLINE";
-                        }, 4000); // Talks for 4 seconds
-                    }, 2000); // Thinks for 2 seconds
-                }, 2000); // Listens for 2 seconds
-            }
+                        setLayer('listening'); // Back to idle
+                        stage.style.animationPlayState = "running"; // Continue floating
+                    }, 4000); // Speaking duration
+                }, 2000); // Thinking duration
+            }, 2000); // Listening duration
         }
     </script>
 </body>
-</html>
+    </html>
+    
