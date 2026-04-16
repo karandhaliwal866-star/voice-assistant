@@ -9,52 +9,56 @@
 
         body { 
             background: #020210; 
-            /* LOCK THE BACKGROUND IMAGE HERE */
+            /* THE SHIELD BACKGROUND: This stays perfectly still */
             background-image: url('1776185658997.png'); 
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
             height: 100vh; width: 100vw; 
             overflow: hidden;
-            display: flex; justify-content: center; align-items: center;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
             font-family: 'Segoe UI', sans-serif;
         }
 
-        /* THE ROBOT CONTAINER - Only this part will move */
+        /* CONTAINER FOR MOVING ROBOT */
         #nova-stage { 
             position: relative;
             width: 100%; height: 100%;
             z-index: 10;
+            display: flex; justify-content: center; align-items: center;
         }
 
         .layer { 
             position: absolute; width: 100%; height: 100%; 
-            /* contain ensures the robot doesn't get cut off */
             background-size: contain; 
             background-repeat: no-repeat; 
             background-position: center;
             opacity: 0; transition: opacity 0.5s ease;
+            /* This hides the background parts of the robot images so they don't overlap the still shield */
+            mask-image: radial-gradient(circle, black 40%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle, black 40%, transparent 70%);
         }
 
-        /* --- MAPPING YOUR FILES --- */
-        #charging { background-image: url('1776185658997.png'); opacity: 1; }
+        /* --- IMAGE MAPPING --- */
+        #charging { background-image: url('1776185658997.png'); opacity: 1; mask-image: none; -webkit-mask-image: none; }
         #shatter { background-image: url('1776185647325.png'); }
         #talking { background-image: url('1776257394473.png'); }
         #thinking { background-image: url('1776257407074.png'); }
         #listening { background-image: url('1776257419064.png'); }
 
-        /* DRIVING THE ROBOT (Only Nova moves, not the stars) */
-        @keyframes robotOnlyDrift {
+        /* ROBOT-ONLY FLOAT */
+        @keyframes robotDrift {
             0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(20px, -30px); }
+            50% { transform: translate(10px, -20px); }
         }
-        .floating { animation: robotOnlyDrift 7s infinite ease-in-out; }
+        .floating { animation: robotDrift 6s infinite ease-in-out; }
 
-        #ui { position: fixed; bottom: 40px; z-index: 100; display: flex; gap: 10px; }
+        #ui { position: fixed; bottom: 50px; z-index: 100; display: flex; gap: 15px; }
         
         button { 
-            padding: 12px 25px; border-radius: 50px; border: 2px solid #00d2ff; 
-            background: rgba(0, 0, 0, 0.85); color: #00d2ff; 
+            padding: 14px 28px; border-radius: 50px; border: 2px solid #00d2ff; 
+            background: rgba(0, 0, 0, 0.8); color: #00d2ff; 
             cursor: pointer; font-weight: bold; text-transform: uppercase;
             box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
         }
@@ -79,6 +83,11 @@
     <script>
         const layers = document.querySelectorAll('.layer');
         const stage = document.getElementById('nova-stage');
+        const btns = {
+            act: document.getElementById('act-btn'),
+            ask: document.getElementById('ask-btn'),
+            deact: document.getElementById('deact-btn')
+        };
 
         function setLayer(id) {
             layers.forEach(l => l.style.opacity = "0");
@@ -86,43 +95,42 @@
         }
 
         function speak(text, callback) {
+            window.speechSynthesis.cancel();
             const utterance = new SpeechSynthesisUtterance(text);
-            utterance.rate = 1.0; 
-            utterance.pitch = 1.1; 
             utterance.onend = callback;
             window.speechSynthesis.speak(utterance);
         }
 
         function activate() {
-            setLayer('shatter'); // Cracks appear
-            document.getElementById('act-btn').style.display = "none";
-            speak("Nova system active.", () => {
-                setLayer('listening');
-                stage.classList.add('floating');
-                document.getElementById('ask-btn').style.display = "block";
-                document.getElementById('deact-btn').style.display = "block";
+            setLayer('shatter'); //
+            btns.act.style.display = "none";
+            speak("Nova core activated. Shield integrity stable.", () => {
+                setLayer('listening'); //
+                stage.classList.add('floating'); //
+                btns.ask.style.display = "block";
+                btns.deact.style.display = "block";
             });
         }
 
         function deactivate() {
             stage.classList.remove('floating');
-            speak("Entering sleep mode.", () => {
-                setLayer('charging'); // Back to full shield
-                document.getElementById('act-btn').style.display = "block";
-                document.getElementById('ask-btn').style.display = "none";
-                document.getElementById('deact-btn').style.display = "none";
+            speak("Returning to shield.", () => {
+                setLayer('charging'); //
+                btns.act.style.display = "block";
+                btns.ask.style.display = "none";
+                btns.deact.style.display = "none";
             });
         }
 
         function askNova() {
             stage.style.animationPlayState = "paused";
-            setLayer('listening');
+            setLayer('listening'); 
             
             setTimeout(() => {
-                setLayer('thinking');
+                setLayer('thinking'); //
                 setTimeout(() => {
-                    setLayer('talking');
-                    speak("I am here to help you. What would you like to know today?", () => {
+                    setLayer('talking'); //
+                    speak("I am processing your data now. How else can I help?", () => {
                         setLayer('listening');
                         stage.style.animationPlayState = "running";
                     });
@@ -131,4 +139,5 @@
         }
     </script>
 </body>
-</html>
+                                                                   </html>
+            
