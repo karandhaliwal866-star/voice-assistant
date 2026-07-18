@@ -3,141 +3,283 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nova AI Assistant</title>
+    <title>AI Core Orb Terminal</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap');
 
-        body { 
-            background: #020210; 
-            /* THE SHIELD BACKGROUND: This stays perfectly still */
-            background-image: url('1776185658997.png'); 
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            height: 100vh; width: 100vw; 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: #030307;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             overflow: hidden;
-            display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-            font-family: 'Segoe UI', sans-serif;
         }
 
-        /* CONTAINER FOR MOVING ROBOT */
-        #nova-stage { 
-            position: relative;
-            width: 100%; height: 100%;
+        /* Control Panel Layout */
+        .controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
             z-index: 10;
-            display: flex; justify-content: center; align-items: center;
         }
 
-        .layer { 
-            position: absolute; width: 100%; height: 100%; 
-            background-size: contain; 
-            background-repeat: no-repeat; 
-            background-position: center;
-            opacity: 0; transition: opacity 0.5s ease;
-            /* This hides the background parts of the robot images so they don't overlap the still shield */
-            mask-image: radial-gradient(circle, black 40%, transparent 70%);
-            -webkit-mask-image: radial-gradient(circle, black 40%, transparent 70%);
+        button {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #9ca3af;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* --- IMAGE MAPPING --- */
-        #charging { background-image: url('1776185658997.png'); opacity: 1; mask-image: none; -webkit-mask-image: none; }
-        #shatter { background-image: url('1776185647325.png'); }
-        #talking { background-image: url('1776257394473.png'); }
-        #thinking { background-image: url('1776257407074.png'); }
-        #listening { background-image: url('1776257419064.png'); }
-
-        /* ROBOT-ONLY FLOAT */
-        @keyframes robotDrift {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(10px, -20px); }
+        button:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
         }
-        .floating { animation: robotDrift 6s infinite ease-in-out; }
 
-        #ui { position: fixed; bottom: 50px; z-index: 100; display: flex; gap: 15px; }
-        
-        button { 
-            padding: 14px 28px; border-radius: 50px; border: 2px solid #00d2ff; 
-            background: rgba(0, 0, 0, 0.8); color: #00d2ff; 
-            cursor: pointer; font-weight: bold; text-transform: uppercase;
-            box-shadow: 0 0 15px rgba(0, 210, 255, 0.4);
+        #btn-activate.active {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10b981;
+            color: #34d399;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        }
+
+        #btn-deactivate.active {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: #ef4444;
+            color: #f87171;
+        }
+
+        /* --- THE CORE ORB CONFIGURATION --- */
+        .orb-wrapper {
+            position: relative;
+            width: 320px;
+            height: 320px;
+            display: grid;
+            place-items: center; /* Forces total absolute centering for all direct children */
+        }
+
+        .orb-body {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.8) 80%);
+            box-shadow: 
+                inset 0 0 40px rgba(255, 255, 255, 0.1),
+                inset -20px -20px 60px rgba(0, 0, 0, 0.9),
+                0 0 50px rgba(99, 102, 241, 0.2);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+
+        /* Concentric Energy Rings */
+        .orb-wave-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 2px dashed rgba(99, 102, 241, 0.2);
+            transition: all 0.6s ease;
+            z-index: 2;
+        }
+
+        /* Centered Embedded Typography Status */
+        .orb-status-text {
+            grid-area: 1 / 1 / 2 / 2; /* Forces text onto exact identical grid space layer */
+            z-index: 5;
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: 0.5px;
+            text-align: center;
+            pointer-events: none;
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+            transition: all 0.4s ease;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        /* --- STATE ANIMATION LOOPS --- */
+
+        /* Ready State */
+        .state-ready .orb-body {
+            box-shadow: 0 0 60px rgba(99, 102, 241, 0.25), inset 0 0 30px rgba(99, 102, 241, 0.2);
+            animation: breathe 4s ease-in-out infinite;
+        }
+        .state-ready .orb-status-text {
+            color: #a5b4fc;
+            text-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
+        }
+
+        /* Listening State */
+        .state-listening .orb-body {
+            box-shadow: 0 0 80px rgba(16, 185, 129, 0.4), inset 0 0 40px rgba(16, 185, 129, 0.3);
+            background: radial-gradient(circle at 35% 35%, rgba(16, 185, 129, 0.1) 0%, rgba(0, 0, 0, 0.85) 75%);
+        }
+        .state-listening .orb-wave-ring {
+            border: 2px solid rgba(16, 185, 129, 0.4);
+            transform: scale(1.08);
+            animation: audioRipple 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        .state-listening .orb-status-text {
+            color: #34d399;
+            text-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
+        }
+
+        /* Thinking State */
+        .state-thinking .orb-body {
+            box-shadow: 0 0 70px rgba(168, 85, 247, 0.4), inset 0 0 40px rgba(168, 85, 247, 0.2);
+            animation: deepPulse 1.5s ease-in-out infinite alternate;
+        }
+        .state-thinking .orb-wave-ring {
+            border: 2px dotted rgba(168, 85, 247, 0.6);
+            transform: scale(1.04);
+            animation: fastRotate 2s linear infinite;
+        }
+        .state-thinking .orb-status-text {
+            color: #c084fc;
+            text-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
+        }
+
+        /* Speaking State */
+        .state-speaking .orb-body {
+            box-shadow: 0 0 90px rgba(6, 182, 212, 0.45), inset 0 0 40px rgba(6, 182, 212, 0.3);
+            animation: voiceTrack 0.6s ease-in-out infinite alternate;
+        }
+        .state-speaking .orb-wave-ring {
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            animation: voiceRingOut 0.8s ease-out infinite;
+        }
+        .state-speaking .orb-status-text {
+            color: #22d3ee;
+            text-shadow: 0 0 20px rgba(6, 182, 212, 0.8);
+        }
+
+        /* --- KEYFRAME ANIMATIONS --- */
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.9; }
+            50% { transform: scale(1.02); opacity: 1; }
+        }
+
+        @keyframes audioRipple {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.12); opacity: 0.4; border-width: 3px; }
+            100% { transform: scale(1.0; opacity: 0.8; }
+        }
+
+        @keyframes fastRotate {
+            0% { transform: scale(1.04) rotate(0deg); }
+            100% { transform: scale(1.04) rotate(360deg); }
+        }
+
+        @keyframes deepPulse {
+            0% { transform: scale(0.98); }
+            100% { transform: scale(1.03); }
+        }
+
+        @keyframes voiceTrack {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.06); }
+        }
+
+        @keyframes voiceRingOut {
+            0% { transform: scale(1); opacity: 0.8; }
+            100% { transform: scale(1.25); opacity: 0; }
         }
     </style>
 </head>
-<body>
+<body class="state-ready">
 
-    <div id="nova-stage">
-        <div id="charging" class="layer"></div>
-        <div id="shatter" class="layer"></div>
-        <div id="listening" class="layer"></div>
-        <div id="thinking" class="layer"></div>
-        <div id="talking" class="layer"></div>
+    <div class="controls">
+        <button id="btn-activate" onclick="activateAI()">Activate AI</button>
+        <button id="btn-deactivate" onclick="deactivateAI()" class="active">Deactivate AI</button>
     </div>
 
-    <div id="ui">
-        <button id="act-btn" onclick="activate()">Activate Nova</button>
-        <button id="ask-btn" onclick="askNova()" style="display:none;">Ask Nova</button>
-        <button id="deact-btn" onclick="deactivate()" style="display:none;">Deactivate</button>
+    <!-- The Centered Orb Architecture Stack -->
+    <div class="orb-wrapper" id="orbWrapper">
+        <div class="orb-body"></div>
+        <div class="orb-wave-ring"></div>
+        <div class="orb-status-text" id="statusText">Ready</div>
     </div>
 
     <script>
-        const layers = document.querySelectorAll('.layer');
-        const stage = document.getElementById('nova-stage');
-        const btns = {
-            act: document.getElementById('act-btn'),
-            ask: document.getElementById('ask-btn'),
-            deact: document.getElementById('deact-btn')
-        };
+        const container = document.body;
+        const txt = document.getElementById('statusText');
+        const btnAct = document.getElementById('btn-activate');
+        const btnDeact = document.getElementById('btn-deactivate');
+        
+        let loopTimeline = null;
+        let isSystemLive = false;
 
-        function setLayer(id) {
-            layers.forEach(l => l.style.opacity = "0");
-            document.getElementById(id).style.opacity = "1";
+        function setOrbState(stateClass, textMarkup) {
+            container.className = ''; 
+            container.classList.add(stateClass);
+            txt.innerHTML = textMarkup;
         }
 
-        function speak(text, callback) {
-            window.speechSynthesis.cancel();
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.onend = callback;
-            window.speechSynthesis.speak(utterance);
-        }
-
-        function activate() {
-            setLayer('shatter'); //
-            btns.act.style.display = "none";
-            speak("Nova core activated. Shield integrity stable.", () => {
-                setLayer('listening'); //
-                stage.classList.add('floating'); //
-                btns.ask.style.display = "block";
-                btns.deact.style.display = "block";
-            });
-        }
-
-        function deactivate() {
-            stage.classList.remove('floating');
-            speak("Returning to shield.", () => {
-                setLayer('charging'); //
-                btns.act.style.display = "block";
-                btns.ask.style.display = "none";
-                btns.deact.style.display = "none";
-            });
-        }
-
-        function askNova() {
-            stage.style.animationPlayState = "paused";
-            setLayer('listening'); 
+        function activateAI() {
+            isSystemLive = true;
+            btnAct.classList.add('active');
+            btnDeact.classList.remove('active');
             
-            setTimeout(() => {
-                setLayer('thinking'); //
-                setTimeout(() => {
-                    setLayer('talking'); //
-                    speak("I am processing your data now. How else can I help?", () => {
-                        setLayer('listening');
-                        stage.style.animationPlayState = "running";
-                    });
-                }, 2000);
-            }, 2000);
+            // Clear any lingering asynchronous state tasks
+            clearTimeout(loopTimeline);
+            runConversationalCycle();
+        }
+
+        function runConversationalCycle() {
+            if (!isSystemLive) return;
+
+            // Step 1: Immediate Listener Mode
+            setOrbState('state-listening', 'Listening... 🎤');
+
+            // Step 2: Transition to Thinking (Simulated after user stops speaking)
+            loopTimeline = setTimeout(() => {
+                if (!isSystemLive) return;
+                setOrbState('state-thinking', 'Thinking... 🧠');
+
+                // Step 3: Transition to Vocal Output
+                loopTimeline = setTimeout(() => {
+                    if (!isSystemLive) return;
+                    setOrbState('state-speaking', 'Speaking... 🔊');
+
+                    // Step 4: Loop directly back to Listening state automatically
+                    loopTimeline = setTimeout(() => {
+                        if (!isSystemLive) return;
+                        runConversationalCycle(); 
+                    }, 4000); // Speaking duration window
+
+                }, 3000); // Thinking processing window
+            }, 4000); // Listening window
+        }
+
+        function deactivateAI() {
+            isSystemLive = false;
+            clearTimeout(loopTimeline);
+            
+            btnAct.classList.remove('active');
+            btnDeact.classList.add('active');
+            
+            setOrbState('state-ready', 'Ready');
         }
     </script>
 </body>
-                                                                   </html>
+            </html>
             
