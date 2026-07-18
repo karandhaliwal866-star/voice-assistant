@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Core Orb Terminal</title>
+    <title>AI Core Orb Interface</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap');
+        /* Modern Font Reset and Global Styling */
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
 
         * {
             margin: 0;
@@ -14,272 +15,236 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
+        /* Deep Space Background matching the Orb */
         body {
-            background-color: #030307;
+            background-color: #03011a; 
             color: #ffffff;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
+            overflow: hidden; /* Keeps the interface clean */
         }
 
-        /* Control Panel Layout */
-        .controls {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 3rem;
+        /* The Main Viewport Container */
+        .app-container {
+            flex: 1; /* Takes up all vertical space except the button footer */
+            display: grid;
+            place-items: center; /* Horizontally and vertically centers the orb */
+            position: relative;
+            padding: 2rem;
+        }
+
+        /* --- THE ORB ARCHITECTURE --- */
+        .orb-stack-container {
+            position: relative;
+            width: 100%;
+            max-width: 650px; /* Limits size on large screens */
+            display: grid;
+            place-items: center; /* Centers all stack elements (Image + Text) */
+        }
+
+        /* The Base Layer: Your Generated Image (Image 12) */
+        .orb-image {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 50%; /* Just to keep edges clean */
+            z-index: 1; /* Lowest layer */
+        }
+
+        /* The Data Layer: The Status Text Container (Center of the Orb) */
+        .data-overlay-container {
+            grid-area: 1 / 1 / 2 / 2; /* Forces text to occupy the exact same grid space as the image */
+            z-index: 5; /* Sit on top of the image */
+            display: grid;
+            place-items: center; /* Center the text contents */
+            width: 30%; /* Limits text size to the inner dark area of the orb */
+            height: 30%;
+        }
+
+        /* Base Styling for Status Texts (States) */
+        .status-text {
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0; /* Default invisible */
+            visibility: hidden;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+            text-align: center;
+            
+            /* Apply dynamic text glow */
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 
+                         0 0 20px rgba(118, 255, 222, 0.6); /* Cyan/Green bias from image */
+            
+            animation: pulse-glow 2s ease-in-out infinite, slow-rotation 10s linear infinite;
+        }
+
+        /* State Control: Make a text state visible when active */
+        .status-text.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* --- KEYFRAMES --- */
+        
+        /* Define the glowing text pulse */
+        @keyframes pulse-glow {
+            0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(118, 255, 222, 0.6); opacity: 1; }
+            50% { text-shadow: 0 0 15px rgba(255, 255, 255, 1), 0 0 30px rgba(118, 255, 222, 0.9); opacity: 0.9; }
+        }
+
+        /* Define the slow, subtle rotation in the center of the orb */
+        @keyframes slow-rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* --- BUTTON FOOTER LAYOUT --- */
+        .footer {
+            width: 100%;
+            height: 100px;
+            display: grid;
+            place-items: center; /* Center the button vertically and horizontally */
+            background: linear-gradient(to top, #03011a, rgba(3, 1, 26, 0)); /* subtle gradient lift */
             z-index: 10;
         }
 
-        button {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            color: #9ca3af;
-            padding: 0.75rem 1.5rem;
-            border-radius: 12px;
-            cursor: pointer;
+        /* The Main Button Styling */
+        #coreActionButton {
+            background: transparent;
+            color: rgba(118, 255, 222, 0.9); /* Core Cyan Glow color */
+            border: 2px solid rgba(118, 255, 222, 0.4);
+            padding: 1rem 3rem;
+            font-size: 1rem;
             font-weight: 600;
-            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            border-radius: 50px;
+            cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            
+            box-shadow: 0 0 15px rgba(118, 255, 222, 0.1);
         }
 
-        button:hover {
-            background: rgba(255, 255, 255, 0.08);
-            color: #fff;
-            border-color: rgba(255, 255, 255, 0.2);
+        /* Hover Interaction */
+        #coreActionButton:hover {
+            border-color: rgba(118, 255, 222, 0.8);
+            box-shadow: 0 0 25px rgba(118, 255, 222, 0.3);
+            color: rgba(118, 255, 222, 1);
+            transform: translateY(-2px);
         }
 
-        #btn-activate.active {
-            background: rgba(16, 185, 129, 0.15);
-            border-color: #10b981;
-            color: #34d399;
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+        /* The State: Button when 'Active' (Deactivate mode) */
+        #coreActionButton.is-active {
+            border-color: rgba(255, 68, 168, 0.4); /* Pink bias from image */
+            color: rgba(255, 68, 168, 0.9);
+            box-shadow: 0 0 15px rgba(255, 68, 168, 0.1);
         }
 
-        #btn-deactivate.active {
-            background: rgba(239, 68, 68, 0.15);
-            border-color: #ef4444;
-            color: #f87171;
+        #coreActionButton.is-active:hover {
+            border-color: rgba(255, 68, 168, 1);
+            box-shadow: 0 0 25px rgba(255, 68, 168, 0.3);
+            color: rgba(255, 68, 168, 1);
         }
 
-        /* --- THE CORE ORB CONFIGURATION --- */
-        .orb-wrapper {
-            position: relative;
-            width: 320px;
-            height: 320px;
-            display: grid;
-            place-items: center; /* Forces total absolute centering for all direct children */
-        }
-
-        .orb-body {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.05) 0%, rgba(0, 0, 0, 0.8) 80%);
-            box-shadow: 
-                inset 0 0 40px rgba(255, 255, 255, 0.1),
-                inset -20px -20px 60px rgba(0, 0, 0, 0.9),
-                0 0 50px rgba(99, 102, 241, 0.2);
-            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1;
-        }
-
-        /* Concentric Energy Rings */
-        .orb-wave-ring {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 2px dashed rgba(99, 102, 241, 0.2);
-            transition: all 0.6s ease;
-            z-index: 2;
-        }
-
-        /* Centered Embedded Typography Status */
-        .orb-status-text {
-            grid-area: 1 / 1 / 2 / 2; /* Forces text onto exact identical grid space layer */
-            z-index: 5;
-            font-weight: 700;
-            font-size: 1.25rem;
-            letter-spacing: 0.5px;
-            text-align: center;
-            pointer-events: none;
-            text-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
-            transition: all 0.4s ease;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-        }
-
-        /* --- STATE ANIMATION LOOPS --- */
-
-        /* Ready State */
-        .state-ready .orb-body {
-            box-shadow: 0 0 60px rgba(99, 102, 241, 0.25), inset 0 0 30px rgba(99, 102, 241, 0.2);
-            animation: breathe 4s ease-in-out infinite;
-        }
-        .state-ready .orb-status-text {
-            color: #a5b4fc;
-            text-shadow: 0 0 15px rgba(99, 102, 241, 0.6);
-        }
-
-        /* Listening State */
-        .state-listening .orb-body {
-            box-shadow: 0 0 80px rgba(16, 185, 129, 0.4), inset 0 0 40px rgba(16, 185, 129, 0.3);
-            background: radial-gradient(circle at 35% 35%, rgba(16, 185, 129, 0.1) 0%, rgba(0, 0, 0, 0.85) 75%);
-        }
-        .state-listening .orb-wave-ring {
-            border: 2px solid rgba(16, 185, 129, 0.4);
-            transform: scale(1.08);
-            animation: audioRipple 1.2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-        }
-        .state-listening .orb-status-text {
-            color: #34d399;
-            text-shadow: 0 0 20px rgba(16, 185, 129, 0.8);
-        }
-
-        /* Thinking State */
-        .state-thinking .orb-body {
-            box-shadow: 0 0 70px rgba(168, 85, 247, 0.4), inset 0 0 40px rgba(168, 85, 247, 0.2);
-            animation: deepPulse 1.5s ease-in-out infinite alternate;
-        }
-        .state-thinking .orb-wave-ring {
-            border: 2px dotted rgba(168, 85, 247, 0.6);
-            transform: scale(1.04);
-            animation: fastRotate 2s linear infinite;
-        }
-        .state-thinking .orb-status-text {
-            color: #c084fc;
-            text-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
-        }
-
-        /* Speaking State */
-        .state-speaking .orb-body {
-            box-shadow: 0 0 90px rgba(6, 182, 212, 0.45), inset 0 0 40px rgba(6, 182, 212, 0.3);
-            animation: voiceTrack 0.6s ease-in-out infinite alternate;
-        }
-        .state-speaking .orb-wave-ring {
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            animation: voiceRingOut 0.8s ease-out infinite;
-        }
-        .state-speaking .orb-status-text {
-            color: #22d3ee;
-            text-shadow: 0 0 20px rgba(6, 182, 212, 0.8);
-        }
-
-        /* --- KEYFRAME ANIMATIONS --- */
-        @keyframes breathe {
-            0%, 100% { transform: scale(1); opacity: 0.9; }
-            50% { transform: scale(1.02); opacity: 1; }
-        }
-
-        @keyframes audioRipple {
-            0% { transform: scale(1); opacity: 0.8; }
-            50% { transform: scale(1.12); opacity: 0.4; border-width: 3px; }
-            100% { transform: scale(1.0; opacity: 0.8; }
-        }
-
-        @keyframes fastRotate {
-            0% { transform: scale(1.04) rotate(0deg); }
-            100% { transform: scale(1.04) rotate(360deg); }
-        }
-
-        @keyframes deepPulse {
-            0% { transform: scale(0.98); }
-            100% { transform: scale(1.03); }
-        }
-
-        @keyframes voiceTrack {
-            0% { transform: scale(1); }
-            100% { transform: scale(1.06); }
-        }
-
-        @keyframes voiceRingOut {
-            0% { transform: scale(1); opacity: 0.8; }
-            100% { transform: scale(1.25); opacity: 0; }
-        }
     </style>
 </head>
-<body class="state-ready">
+<body>
 
-    <div class="controls">
-        <button id="btn-activate" onclick="activateAI()">Activate AI</button>
-        <button id="btn-deactivate" onclick="deactivateAI()" class="active">Deactivate AI</button>
+    <!-- Main Viewport Context -->
+    <div class="app-container">
+        
+        <!-- Centered Orb Architecture -->
+        <div class="orb-stack-container">
+            
+            <!-- Use your specific generated image (Image 12) -->
+            <img src="image_12.png" alt="Multi-colored plasma orb" class="orb-image">
+            
+            <!-- Data Overlay Layer (Sitting in the absolute center) -->
+            <div class="data-overlay-container">
+                <div id="stateListening" class="status-text">LISTENING</div>
+                <div id="stateThinking" class="status-text">THINKING</div>
+                <div id="stateSpeaking" class="status-text">SPEAKING</div>
+            </div>
+
+        </div>
+
     </div>
 
-    <!-- The Centered Orb Architecture Stack -->
-    <div class="orb-wrapper" id="orbWrapper">
-        <div class="orb-body"></div>
-        <div class="orb-wave-ring"></div>
-        <div class="orb-status-text" id="statusText">Ready</div>
+    <!-- The Action Button (Stuck to bottom) -->
+    <div class="footer">
+        <button id="coreActionButton" onclick="toggleInterfaceState()">Activate</button>
     </div>
 
     <script>
-        const container = document.body;
-        const txt = document.getElementById('statusText');
-        const btnAct = document.getElementById('btn-activate');
-        const btnDeact = document.getElementById('btn-deactivate');
-        
-        let loopTimeline = null;
-        let isSystemLive = false;
+        // DOM References
+        const button = document.getElementById('coreActionButton');
+        const states = {
+            listening: document.getElementById('stateListening'),
+            thinking: document.getElementById('stateThinking'),
+            speaking: document.getElementById('stateSpeaking'),
+        };
 
-        function setOrbState(stateClass, textMarkup) {
-            container.className = ''; 
-            container.classList.add(stateClass);
-            txt.innerHTML = textMarkup;
+        let isActive = false; // System starts Deactivated
+        let stateCycleInterval = null; // Stores the continuous text cycle loop
+
+        // Primary Function: Handle the button press and Interface State Toggle
+        function toggleInterfaceState() {
+            isActive = !isActive; // Flip the system state
+
+            if (isActive) {
+                // SYSTEM ACTIVATED
+                button.innerHTML = "Deactivate"; // Change text
+                button.classList.add('is-active'); // Add pink styling state
+                startDataCycle(); // Begin cycling text in center
+            } else {
+                // SYSTEM DEACTIVATED (Back to startup mode)
+                button.innerHTML = "Activate"; // Change text back
+                button.classList.remove('is-active'); // Revert to cyan styling
+                resetDataCycle(); // Instantly hide all text
+            }
         }
 
-        function activateAI() {
-            isSystemLive = true;
-            btnAct.classList.add('active');
-            btnDeact.classList.remove('active');
-            
-            // Clear any lingering asynchronous state tasks
-            clearTimeout(loopTimeline);
-            runConversationalCycle();
+        // Cycle Logic: This function handles how the text changes over time
+        function startDataCycle() {
+            resetDataCycle(); // Ensure clean slate before starting
+
+            const sequence = ['listening', 'thinking', 'speaking'];
+            let index = 0;
+
+            const cycleData = () => {
+                const currentState = sequence[index];
+
+                // Hide all states using visibility helper
+                Object.values(states).forEach(el => el.classList.remove('visible'));
+
+                // Show the current state
+                states[currentState].classList.add('visible');
+
+                // Advance index and loop back if finished
+                index = (index + 1) % sequence.length;
+            };
+
+            // Start the cycle IMMEDIATELY on activation
+            cycleData();
+
+            // Then set it to repeat every 3 seconds (adjust timing here)
+            stateCycleInterval = setInterval(cycleData, 3000);
         }
 
-        function runConversationalCycle() {
-            if (!isSystemLive) return;
-
-            // Step 1: Immediate Listener Mode
-            setOrbState('state-listening', 'Listening... 🎤');
-
-            // Step 2: Transition to Thinking (Simulated after user stops speaking)
-            loopTimeline = setTimeout(() => {
-                if (!isSystemLive) return;
-                setOrbState('state-thinking', 'Thinking... 🧠');
-
-                // Step 3: Transition to Vocal Output
-                loopTimeline = setTimeout(() => {
-                    if (!isSystemLive) return;
-                    setOrbState('state-speaking', 'Speaking... 🔊');
-
-                    // Step 4: Loop directly back to Listening state automatically
-                    loopTimeline = setTimeout(() => {
-                        if (!isSystemLive) return;
-                        runConversationalCycle(); 
-                    }, 4000); // Speaking duration window
-
-                }, 3000); // Thinking processing window
-            }, 4000); // Listening window
-        }
-
-        function deactivateAI() {
-            isSystemLive = false;
-            clearTimeout(loopTimeline);
-            
-            btnAct.classList.remove('active');
-            btnDeact.classList.add('active');
-            
-            setOrbState('state-ready', 'Ready');
+        // Reset Logic: Instantly hide all text in the orb
+        function resetDataCycle() {
+            if (stateCycleInterval) {
+                clearInterval(stateCycleInterval);
+                stateCycleInterval = null;
+            }
+            // Ensure all states are hidden
+            Object.values(states).forEach(el => el.classList.remove('visible'));
         }
     </script>
+
 </body>
-            </html>
-            
+    </html>
+    
