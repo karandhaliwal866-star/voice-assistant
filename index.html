@@ -1,278 +1,377 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOVA AI - Core Control System</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>NOVA — AI Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#050308;
+    --bg-2:#0b0716;
+    --magenta:#ff2e8c;
+    --cyan:#2af5e0;
+    --gold:#ffcf5c;
+    --violet:#8b5cf6;
+    --text:#f1eefc;
+    --muted:#9a97b3;
+    --danger:#ff4d4d;
+  }
 
-        body {
-            /* Full-screen setup using your exact filename */
-            background: url('1784441715962.png') no-repeat center center fixed;
-            background-size: cover;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: #fff;
-            overflow-x: hidden;
-        }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
 
-        header {
-            text-align: center;
-            margin-top: 20px;
-            text-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
-        }
+  html,body{
+    margin:0;
+    padding:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',sans-serif;
+    min-height:100dvh;
+    overflow-x:hidden;
+  }
 
-        header h1 {
-            font-size: 3rem;
-            letter-spacing: 5px;
-            color: #00f2fe;
-        }
+  body{
+    background:
+      radial-gradient(60% 40% at 50% 0%, rgba(139,92,246,0.18), transparent 70%),
+      radial-gradient(60% 50% at 50% 100%, rgba(255,46,140,0.12), transparent 70%),
+      var(--bg);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px 16px 40px;
+  }
 
-        /* High-Visibility Neon Status Bar */
-        .status-monitor {
-            background: rgba(10, 15, 30, 0.85);
-            border: 1px solid rgba(0, 242, 254, 0.4);
-            border-radius: 30px;
-            padding: 10px 40px;
-            margin-top: 15px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            color: #888;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-            transition: all 0.4s ease;
-        }
+  .page{
+    width:100%;
+    max-width:1100px;
+    display:grid;
+    grid-template-columns:1fr;
+    gap:28px;
+    place-items:center;
+    text-align:center;
+  }
 
-        /* Dynamic Glow Animations for AI States */
-        .status-monitor.listening {
-            color: #2bef86;
-            border-color: #2bef86;
-            box-shadow: 0 0 20px rgba(43, 239, 134, 0.4);
-            animation: pulseGlow 1.5s infinite alternate;
-        }
+  .stage{
+    position:relative;
+    width:100%;
+    max-width:460px;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 0 0 1px rgba(255,255,255,0.06), 0 30px 80px -20px rgba(255,46,140,0.25), 0 30px 80px -30px rgba(42,245,224,0.15);
+  }
 
-        .status-monitor.thinking {
-            color: #ffb703;
-            border-color: #ffb703;
-            box-shadow: 0 0 20px rgba(255, 183, 3, 0.4);
-            animation: pulseGlow 1.5s infinite alternate;
-        }
+  .stage img{
+    display:block;
+    width:100%;
+    height:auto;
+  }
 
-        .status-monitor.speaking {
-            color: #00f2fe;
-            border-color: #00f2fe;
-            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
-            animation: pulseGlow 1.5s infinite alternate;
-        }
+  .stage::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(5,3,8,0) 55%, rgba(5,3,8,0.85) 100%);
+    pointer-events:none;
+  }
 
-        @keyframes pulseGlow {
-            from { opacity: 0.8; }
-            to { opacity: 1; box-shadow: 0 0 30px currentcolor; }
-        }
+  .control{
+    position:absolute;
+    left:50%;
+    top:78.5%;
+    transform:translate(-50%,-50%);
+    z-index:2;
+  }
 
-        /* Shield & Dynamic Toggle Button Layout */
-        .shield-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
+  .orb-btn{
+    --ring: conic-gradient(from 0deg, var(--magenta), var(--gold), var(--cyan), var(--violet), var(--magenta));
+    position:relative;
+    width:19vw;
+    max-width:88px;
+    min-width:64px;
+    aspect-ratio:1/1;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    padding:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:var(--bg-2);
+    isolation:isolate;
+  }
 
-        /* Leaves exactly 380px of clear room for the robot portal graphics behind it */
-        .shield-spacer {
-            height: 380px; 
-            width: 100%;
-        }
+  .orb-btn::before{
+    content:"";
+    position:absolute;
+    inset:-4px;
+    border-radius:50%;
+    background:var(--ring);
+    z-index:-2;
+    animation:spin 4s linear infinite;
+  }
 
-        .nova-toggle-btn {
-            font-size: 1.2rem;
-            padding: 15px 45px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-            border: none;
-            color: white;
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
+  .orb-btn::after{
+    content:"";
+    position:absolute;
+    inset:3px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #14101f, var(--bg-2) 70%);
+    z-index:-1;
+  }
 
-        .btn-activate {
-            background: linear-gradient(45deg, #0072ff, #00f2fe);
-            box-shadow: 0 4px 20px rgba(0, 242, 254, 0.4);
-        }
+  .orb-btn .core{
+    width:34%;
+    height:34%;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--cyan) 45%, var(--magenta) 100%);
+    box-shadow:0 0 18px 2px rgba(42,245,224,0.65);
+    transition:all .35s ease;
+  }
 
-        .btn-deactivate {
-            background: linear-gradient(45deg, #d00000, #ff0055);
-            box-shadow: 0 4px 20px rgba(255, 0, 85, 0.4);
-        }
+  .orb-btn.active .core{
+    background:radial-gradient(circle at 35% 30%, #fff, var(--magenta) 45%, var(--violet) 100%);
+    box-shadow:0 0 22px 4px rgba(255,46,140,0.7);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
 
-        .main-container {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            max-width: 800px;
-            padding: 30px 20px;
-        }
+  .orb-btn.active::before{ animation-duration:1.6s; }
 
-        .glass-panel {
-            background: rgba(10, 15, 30, 0.65);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 242, 254, 0.25);
-            border-radius: 16px;
-            padding: 20px;
-            width: 100%;
-        }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  @keyframes pulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.18); }
+  }
 
-        .chat-box {
-            display: flex;
-            flex-direction: column;
-            height: 300px;
-        }
+  .status-wrap{
+    position:absolute;
+    left:50%;
+    top:90%;
+    transform:translate(-50%,-50%);
+    width:100%;
+    z-index:2;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:6px;
+    min-height:36px;
+  }
 
-        .chat-logs {
-            flex: 1;
-            overflow-y: auto;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
+  .status-label{
+    font-family:'Orbitron',sans-serif;
+    font-weight:700;
+    font-size:clamp(12px,3.4vw,16px);
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    opacity:0;
+    transform:translateY(6px);
+    transition:opacity .3s ease, transform .3s ease, color .3s ease;
+  }
 
-        .input-group {
-            display: flex;
-            gap: 10px;
-        }
+  .status-label.show{ opacity:1; transform:translateY(0); }
+  .status-label.listening{ color:var(--cyan); text-shadow:0 0 12px rgba(42,245,224,0.8); }
+  .status-label.thinking{ color:var(--gold); text-shadow:0 0 12px rgba(255,207,92,0.8); }
+  .status-label.speaking{ color:var(--magenta); text-shadow:0 0 12px rgba(255,46,140,0.8); }
 
-        input[type="text"] {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid #00f2fe;
-            border-radius: 8px;
-            padding: 12px;
-            color: white;
-            outline: none;
-        }
+  .dots{ display:inline-flex; gap:4px; }
+  .dots span{
+    width:5px; height:5px; border-radius:50%;
+    background:currentColor;
+    opacity:.3;
+    animation:blink 1.2s infinite;
+  }
+  .dots span:nth-child(2){ animation-delay:.2s; }
+  .dots span:nth-child(3){ animation-delay:.4s; }
+  @keyframes blink{ 0%,80%,100%{ opacity:.25; } 40%{ opacity:1; } }
 
-        button.send-btn {
-            background: rgba(255, 255, 255, 0.15);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-        }
-    </style>
+  .caption{
+    max-width:480px;
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.6;
+    padding:0 8px;
+  }
+
+  .caption strong{ color:var(--text); }
+
+  .hint{
+    font-family:'Orbitron',sans-serif;
+    font-size:11px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+
+  .unsupported{
+    display:none;
+    color:var(--danger);
+    font-size:13px;
+    max-width:420px;
+  }
+
+  @media (max-width:420px){
+    .control{ top:78%; }
+    .status-wrap{ top:89%; }
+  }
+</style>
 </head>
 <body>
 
-    <header>
-        <h1>NOVA SYSTEM CORE</h1>
-    </header>
+  <div class="page">
+    <div class="stage">
+      <img src="1784441715962.png" alt="NOVA — AI activation portal">
 
-    <!-- Top Status Bar Area -->
-    <div class="status-monitor" id="statusMonitor">SYSTEM IDLE</div>
+      <div class="control">
+        <button class="orb-btn" id="orbBtn" aria-pressed="false" aria-label="Activate Nova">
+          <span class="core"></span>
+        </button>
+      </div>
 
-    <!-- Center Space for Shield Image and Main Controller Action Button -->
-    <div class="shield-wrapper">
-        <div class="shield-spacer"></div>
-        <button id="toggleBtn" class="nova-toggle-btn btn-activate" onclick="toggleNova()">Activate Nova</button>
+      <div class="status-wrap">
+        <div class="status-label" id="statusLabel"></div>
+      </div>
     </div>
 
-    <div class="main-container">
-        <!-- Terminal Logs Dashboard Overlay -->
-        <div class="glass-panel chat-box">
-            <h3>🧠 TERMINAL LOGS</h3>
-            <div class="chat-logs" id="chatLogs">
-                <p style="color: rgba(255,255,255,0.5);">[System]: Standby mode. Click Activate to power up engine cores...</p>
-            </div>
-            <div class="input-group">
-                <input type="text" id="userInput" placeholder="Enter override commands here...">
-                <button class="send-btn" onclick="sendTextCommand()">Send</button>
-            </div>
-        </div>
-    </div>
+    <p class="caption">
+      Tap the core to bring <strong>NOVA</strong> online. She'll listen while you speak, think while she works it out, and speak her answer back to you.
+    </p>
+    <p class="unsupported" id="unsupported">
+      Your browser doesn't support voice recognition (try Chrome or Edge). You can still see NOVA's activation states, but voice input won't work here.
+    </p>
+  </div>
 
-    <script>
-        let isNovaActive = false;
-        const statusMonitor = document.getElementById('statusMonitor');
-        const toggleBtn = document.getElementById('toggleBtn');
-        const logs = document.getElementById('chatLogs');
+<script>
+(function(){
+  const orbBtn = document.getElementById('orbBtn');
+  const statusLabel = document.getElementById('statusLabel');
+  const unsupportedMsg = document.getElementById('unsupported');
 
-        function toggleNova() {
-            if (!isNovaActive) {
-                // Initialize System Engine
-                isNovaActive = true;
-                toggleBtn.textContent = "Deactivate Nova";
-                toggleBtn.className = "nova-toggle-btn btn-deactivate";
-                
-                runNovaAIStateLoop();
-            } else {
-                // Safe Interruption / Shutdown Routine
-                isNovaActive = false;
-                toggleBtn.textContent = "Activate Nova";
-                toggleBtn.className = "nova-toggle-btn btn-activate";
-                
-                statusMonitor.textContent = "SYSTEM IDLE";
-                statusMonitor.className = "status-monitor";
-                logs.innerHTML += `<p style="color: #ff0055;"><b>[System]:</b> Nova AI Core Stopped.</p>`;
-            }
-        }
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const synth = window.speechSynthesis;
 
-        function runNovaAIStateLoop() {
-            if (!isNovaActive) return;
+  let recognition = null;
+  let isActive = false;
+  let manualStop = false;
 
-            // State 1: Listening
-            statusMonitor.textContent = "🎙️ LISTENING...";
-            statusMonitor.className = "status-monitor listening";
-            logs.innerHTML += `<p style="color: #2bef86;"><b>[System]:</b> Audio capturing active. Speak now...</p>`;
+  if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+  } else {
+    unsupportedMsg.style.display = 'block';
+  }
 
-            // Transition to Thinking after 3 seconds
-            setTimeout(() => {
-                if (!isNovaActive) return;
-                
-                // State 2: Thinking
-                statusMonitor.textContent = "⚡ THINKING...";
-                statusMonitor.className = "status-monitor thinking";
-                logs.innerHTML += `<p style="color: #ffb703;"><b>[System]:</b> Processing natural language inputs...</p>`;
+  function setStatus(text, cls){
+    statusLabel.textContent = '';
+    statusLabel.className = 'status-label show ' + (cls || '');
+    if (text) {
+      const span = document.createElement('span');
+      span.textContent = text + ' ';
+      statusLabel.appendChild(span);
+    }
+  }
 
-                // Transition to Speaking after 2.5 seconds
-                setTimeout(() => {
-                    if (!isNovaActive) return;
+  function addDots(){
+    const dots = document.createElement('span');
+    dots.className = 'dots';
+    dots.innerHTML = '<span></span><span></span><span></span>';
+    statusLabel.appendChild(dots);
+  }
 
-                    // State 3: Speaking
-                    statusMonitor.textContent = "🔊 SPEAKING...";
-                    statusMonitor.className = "status-monitor speaking";
-                    logs.innerHTML += `<p style="color: #00f2fe;"><b>Nova AI:</b> Operational routine sequence confirmed.</p>`;
+  function clearStatus(){
+    statusLabel.className = 'status-label';
+    statusLabel.textContent = '';
+  }
 
-                    // Reset back to looping cycle once vocal output finishes
-                    setTimeout(() => {
-                        if (isNovaActive) runNovaAIStateLoop();
-                    }, 3000);
+  // ---- Replace this with a real call to your AI backend ----
+  // It receives the recognized speech text and must resolve with a reply string.
+  function getNovaReply(userText){
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve("You said: " + userText + ". I'm still connected to a placeholder brain — wire me up to your AI backend to give real answers.");
+      }, 1400); // simulated "thinking" time
+    });
+  }
+  // ------------------------------------------------------------
 
-                }, 2500);
+  function startListening(){
+    if (!isActive) return;
+    if (!recognition){
+      setStatus('Voice input unavailable', '');
+      return;
+    }
+    setStatus('Listening', 'listening');
+    addDots();
+    try { recognition.start(); } catch(e) { /* already started */ }
+  }
 
-            }, 3000);
-        }
+  function goInactive(){
+    isActive = false;
+    orbBtn.classList.remove('active');
+    orbBtn.setAttribute('aria-pressed', 'false');
+    orbBtn.setAttribute('aria-label', 'Activate Nova');
+    clearStatus();
+    if (recognition) { manualStop = true; recognition.stop(); }
+    if (synth) synth.cancel();
+  }
 
-        function sendTextCommand() {
-            let input = document.getElementById('userInput');
-            if(input.value.trim() === "") return;
-            logs.innerHTML += `<p><b>Manual Input:</b> ${input.value}</p>`;
-            input.value = "";
-            logs.scrollTop = logs.scrollHeight;
-        }
-    </script>
+  function goActive(){
+    isActive = true;
+    orbBtn.classList.add('active');
+    orbBtn.setAttribute('aria-pressed', 'true');
+    orbBtn.setAttribute('aria-label', 'Deactivate Nova');
+    startListening();
+  }
+
+  orbBtn.addEventListener('click', () => {
+    if (isActive) {
+      goInactive();
+    } else {
+      goActive();
+    }
+  });
+
+  if (recognition){
+    recognition.onresult = async (event) => {
+      const heard = event.results[0][0].transcript;
+
+      setStatus('Thinking', 'thinking');
+      addDots();
+
+      const reply = await getNovaReply(heard);
+
+      if (!isActive) return; // user deactivated while thinking
+
+      setStatus('Speaking', 'speaking');
+
+      if (synth){
+        const utter = new SpeechSynthesisUtterance(reply);
+        utter.onend = () => { if (isActive) startListening(); };
+        synth.speak(utter);
+      } else {
+        setTimeout(() => { if (isActive) startListening(); }, 1200);
+      }
+    };
+
+    recognition.onerror = () => {
+      if (isActive && !manualStop) {
+        setTimeout(startListening, 600);
+      }
+      manualStop = false;
+    };
+
+    recognition.onend = () => {
+      // If still active and not mid thinking/speaking, keep the loop going
+      if (isActive && !manualStop && statusLabel.classList.contains('listening')) {
+        setTimeout(startListening, 300);
+      }
+      manualStop = false;
+    };
+  }
+})();
+</script>
+
 </body>
-        </html>
-    
+    </html>
