@@ -13,8 +13,8 @@
         }
 
         body {
-            /* Full-screen setup for your custom background image */
-            background: url('/static/nova_bg.png') no-repeat center center fixed;
+            /* Full-screen setup using your exact filename */
+            background: url('1784441715962.png') no-repeat center center fixed;
             background-size: cover;
             min-height: 100vh;
             display: flex;
@@ -86,7 +86,7 @@
             width: 100%;
         }
 
-        /* Perfectly preserves space for the robot portal graphics behind it */
+        /* Leaves exactly 380px of clear room for the robot portal graphics behind it */
         .shield-spacer {
             height: 380px; 
             width: 100%;
@@ -237,7 +237,7 @@
             statusMonitor.className = "status-monitor listening";
             logs.innerHTML += `<p style="color: #2bef86;"><b>[System]:</b> Audio capturing active. Speak now...</p>`;
 
-            // Simulate transition to Thinking after 3 seconds
+            // Transition to Thinking after 3 seconds
             setTimeout(() => {
                 if (!isNovaActive) return;
                 
@@ -246,7 +246,7 @@
                 statusMonitor.className = "status-monitor thinking";
                 logs.innerHTML += `<p style="color: #ffb703;"><b>[System]:</b> Processing natural language inputs...</p>`;
 
-                // Simulate transition to Speaking after 2.5 seconds
+                // Transition to Speaking after 2.5 seconds
                 setTimeout(() => {
                     if (!isNovaActive) return;
 
@@ -274,4 +274,5 @@
         }
     </script>
 </body>
-</html>
+        </html>
+    
