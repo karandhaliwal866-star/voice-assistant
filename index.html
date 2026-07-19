@@ -3,248 +3,275 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Core Orb Interface</title>
+    <title>NOVA AI - Core Control System</title>
     <style>
-        /* Modern Font Reset and Global Styling */
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* Deep Space Background matching the Orb */
         body {
-            background-color: #03011a; 
-            color: #ffffff;
-            height: 100vh;
+            /* Full-screen setup for your custom background image */
+            background: url('/static/nova_bg.png') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Keeps the interface clean */
+            align-items: center;
+            color: #fff;
+            overflow-x: hidden;
         }
 
-        /* The Main Viewport Container */
-        .app-container {
-            flex: 1; /* Takes up all vertical space except the button footer */
-            display: grid;
-            place-items: center; /* Horizontally and vertically centers the orb */
-            position: relative;
-            padding: 2rem;
-        }
-
-        /* --- THE ORB ARCHITECTURE --- */
-        .orb-stack-container {
-            position: relative;
-            width: 100%;
-            max-width: 650px; /* Limits size on large screens */
-            display: grid;
-            place-items: center; /* Centers all stack elements (Image + Text) */
-        }
-
-        /* The Base Layer: Your Generated Image (Image 12) */
-        .orb-image {
-            width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 50%; /* Just to keep edges clean */
-            z-index: 1; /* Lowest layer */
-        }
-
-        /* The Data Layer: The Status Text Container (Center of the Orb) */
-        .data-overlay-container {
-            grid-area: 1 / 1 / 2 / 2; /* Forces text to occupy the exact same grid space as the image */
-            z-index: 5; /* Sit on top of the image */
-            display: grid;
-            place-items: center; /* Center the text contents */
-            width: 30%; /* Limits text size to the inner dark area of the orb */
-            height: 30%;
-        }
-
-        /* Base Styling for Status Texts (States) */
-        .status-text {
-            color: #ffffff;
-            font-weight: 800;
-            font-size: 1.2rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            opacity: 0; /* Default invisible */
-            visibility: hidden;
-            transition: opacity 0.5s ease, visibility 0.5s ease;
+        header {
             text-align: center;
-            
-            /* Apply dynamic text glow */
-            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 
-                         0 0 20px rgba(118, 255, 222, 0.6); /* Cyan/Green bias from image */
-            
-            animation: pulse-glow 2s ease-in-out infinite, slow-rotation 10s linear infinite;
+            margin-top: 20px;
+            text-shadow: 0 0 15px rgba(0, 242, 254, 0.6);
         }
 
-        /* State Control: Make a text state visible when active */
-        .status-text.visible {
-            opacity: 1;
-            visibility: visible;
+        header h1 {
+            font-size: 3rem;
+            letter-spacing: 5px;
+            color: #00f2fe;
         }
 
-        /* --- KEYFRAMES --- */
-        
-        /* Define the glowing text pulse */
-        @keyframes pulse-glow {
-            0%, 100% { text-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(118, 255, 222, 0.6); opacity: 1; }
-            50% { text-shadow: 0 0 15px rgba(255, 255, 255, 1), 0 0 30px rgba(118, 255, 222, 0.9); opacity: 0.9; }
+        /* High-Visibility Neon Status Bar */
+        .status-monitor {
+            background: rgba(10, 15, 30, 0.85);
+            border: 1px solid rgba(0, 242, 254, 0.4);
+            border-radius: 30px;
+            padding: 10px 40px;
+            margin-top: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: #888;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.4s ease;
         }
 
-        /* Define the slow, subtle rotation in the center of the orb */
-        @keyframes slow-rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* Dynamic Glow Animations for AI States */
+        .status-monitor.listening {
+            color: #2bef86;
+            border-color: #2bef86;
+            box-shadow: 0 0 20px rgba(43, 239, 134, 0.4);
+            animation: pulseGlow 1.5s infinite alternate;
         }
 
-        /* --- BUTTON FOOTER LAYOUT --- */
-        .footer {
+        .status-monitor.thinking {
+            color: #ffb703;
+            border-color: #ffb703;
+            box-shadow: 0 0 20px rgba(255, 183, 3, 0.4);
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+
+        .status-monitor.speaking {
+            color: #00f2fe;
+            border-color: #00f2fe;
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+            animation: pulseGlow 1.5s infinite alternate;
+        }
+
+        @keyframes pulseGlow {
+            from { opacity: 0.8; }
+            to { opacity: 1; box-shadow: 0 0 30px currentcolor; }
+        }
+
+        /* Shield & Dynamic Toggle Button Layout */
+        .shield-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             width: 100%;
-            height: 100px;
-            display: grid;
-            place-items: center; /* Center the button vertically and horizontally */
-            background: linear-gradient(to top, #03011a, rgba(3, 1, 26, 0)); /* subtle gradient lift */
-            z-index: 10;
         }
 
-        /* The Main Button Styling */
-        #coreActionButton {
-            background: transparent;
-            color: rgba(118, 255, 222, 0.9); /* Core Cyan Glow color */
-            border: 2px solid rgba(118, 255, 222, 0.4);
-            padding: 1rem 3rem;
-            font-size: 1rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
+        /* Perfectly preserves space for the robot portal graphics behind it */
+        .shield-spacer {
+            height: 380px; 
+            width: 100%;
+        }
+
+        .nova-toggle-btn {
+            font-size: 1.2rem;
+            padding: 15px 45px;
             border-radius: 50px;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            
-            box-shadow: 0 0 15px rgba(118, 255, 222, 0.1);
+            font-weight: bold;
+            border: none;
+            color: white;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
-        /* Hover Interaction */
-        #coreActionButton:hover {
-            border-color: rgba(118, 255, 222, 0.8);
-            box-shadow: 0 0 25px rgba(118, 255, 222, 0.3);
-            color: rgba(118, 255, 222, 1);
-            transform: translateY(-2px);
+        .btn-activate {
+            background: linear-gradient(45deg, #0072ff, #00f2fe);
+            box-shadow: 0 4px 20px rgba(0, 242, 254, 0.4);
         }
 
-        /* The State: Button when 'Active' (Deactivate mode) */
-        #coreActionButton.is-active {
-            border-color: rgba(255, 68, 168, 0.4); /* Pink bias from image */
-            color: rgba(255, 68, 168, 0.9);
-            box-shadow: 0 0 15px rgba(255, 68, 168, 0.1);
+        .btn-deactivate {
+            background: linear-gradient(45deg, #d00000, #ff0055);
+            box-shadow: 0 4px 20px rgba(255, 0, 85, 0.4);
         }
 
-        #coreActionButton.is-active:hover {
-            border-color: rgba(255, 68, 168, 1);
-            box-shadow: 0 0 25px rgba(255, 68, 168, 0.3);
-            color: rgba(255, 68, 168, 1);
+        .main-container {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 30px 20px;
         }
 
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 242, 254, 0.25);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+        }
+
+        .chat-box {
+            display: flex;
+            flex-direction: column;
+            height: 300px;
+        }
+
+        .chat-logs {
+            flex: 1;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #00f2fe;
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            outline: none;
+        }
+
+        button.send-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Main Viewport Context -->
-    <div class="app-container">
-        
-        <!-- Centered Orb Architecture -->
-        <div class="orb-stack-container">
-            
-            <!-- Use your specific generated image (Image 12) -->
-            <img src="image_12.png" alt="Multi-colored plasma orb" class="orb-image">
-            
-            <!-- Data Overlay Layer (Sitting in the absolute center) -->
-            <div class="data-overlay-container">
-                <div id="stateListening" class="status-text">LISTENING</div>
-                <div id="stateThinking" class="status-text">THINKING</div>
-                <div id="stateSpeaking" class="status-text">SPEAKING</div>
-            </div>
+    <header>
+        <h1>NOVA SYSTEM CORE</h1>
+    </header>
 
-        </div>
+    <!-- Top Status Bar Area -->
+    <div class="status-monitor" id="statusMonitor">SYSTEM IDLE</div>
 
+    <!-- Center Space for Shield Image and Main Controller Action Button -->
+    <div class="shield-wrapper">
+        <div class="shield-spacer"></div>
+        <button id="toggleBtn" class="nova-toggle-btn btn-activate" onclick="toggleNova()">Activate Nova</button>
     </div>
 
-    <!-- The Action Button (Stuck to bottom) -->
-    <div class="footer">
-        <button id="coreActionButton" onclick="toggleInterfaceState()">Activate</button>
+    <div class="main-container">
+        <!-- Terminal Logs Dashboard Overlay -->
+        <div class="glass-panel chat-box">
+            <h3>🧠 TERMINAL LOGS</h3>
+            <div class="chat-logs" id="chatLogs">
+                <p style="color: rgba(255,255,255,0.5);">[System]: Standby mode. Click Activate to power up engine cores...</p>
+            </div>
+            <div class="input-group">
+                <input type="text" id="userInput" placeholder="Enter override commands here...">
+                <button class="send-btn" onclick="sendTextCommand()">Send</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // DOM References
-        const button = document.getElementById('coreActionButton');
-        const states = {
-            listening: document.getElementById('stateListening'),
-            thinking: document.getElementById('stateThinking'),
-            speaking: document.getElementById('stateSpeaking'),
-        };
+        let isNovaActive = false;
+        const statusMonitor = document.getElementById('statusMonitor');
+        const toggleBtn = document.getElementById('toggleBtn');
+        const logs = document.getElementById('chatLogs');
 
-        let isActive = false; // System starts Deactivated
-        let stateCycleInterval = null; // Stores the continuous text cycle loop
-
-        // Primary Function: Handle the button press and Interface State Toggle
-        function toggleInterfaceState() {
-            isActive = !isActive; // Flip the system state
-
-            if (isActive) {
-                // SYSTEM ACTIVATED
-                button.innerHTML = "Deactivate"; // Change text
-                button.classList.add('is-active'); // Add pink styling state
-                startDataCycle(); // Begin cycling text in center
+        function toggleNova() {
+            if (!isNovaActive) {
+                // Initialize System Engine
+                isNovaActive = true;
+                toggleBtn.textContent = "Deactivate Nova";
+                toggleBtn.className = "nova-toggle-btn btn-deactivate";
+                
+                runNovaAIStateLoop();
             } else {
-                // SYSTEM DEACTIVATED (Back to startup mode)
-                button.innerHTML = "Activate"; // Change text back
-                button.classList.remove('is-active'); // Revert to cyan styling
-                resetDataCycle(); // Instantly hide all text
+                // Safe Interruption / Shutdown Routine
+                isNovaActive = false;
+                toggleBtn.textContent = "Activate Nova";
+                toggleBtn.className = "nova-toggle-btn btn-activate";
+                
+                statusMonitor.textContent = "SYSTEM IDLE";
+                statusMonitor.className = "status-monitor";
+                logs.innerHTML += `<p style="color: #ff0055;"><b>[System]:</b> Nova AI Core Stopped.</p>`;
             }
         }
 
-        // Cycle Logic: This function handles how the text changes over time
-        function startDataCycle() {
-            resetDataCycle(); // Ensure clean slate before starting
+        function runNovaAIStateLoop() {
+            if (!isNovaActive) return;
 
-            const sequence = ['listening', 'thinking', 'speaking'];
-            let index = 0;
+            // State 1: Listening
+            statusMonitor.textContent = "🎙️ LISTENING...";
+            statusMonitor.className = "status-monitor listening";
+            logs.innerHTML += `<p style="color: #2bef86;"><b>[System]:</b> Audio capturing active. Speak now...</p>`;
 
-            const cycleData = () => {
-                const currentState = sequence[index];
+            // Simulate transition to Thinking after 3 seconds
+            setTimeout(() => {
+                if (!isNovaActive) return;
+                
+                // State 2: Thinking
+                statusMonitor.textContent = "⚡ THINKING...";
+                statusMonitor.className = "status-monitor thinking";
+                logs.innerHTML += `<p style="color: #ffb703;"><b>[System]:</b> Processing natural language inputs...</p>`;
 
-                // Hide all states using visibility helper
-                Object.values(states).forEach(el => el.classList.remove('visible'));
+                // Simulate transition to Speaking after 2.5 seconds
+                setTimeout(() => {
+                    if (!isNovaActive) return;
 
-                // Show the current state
-                states[currentState].classList.add('visible');
+                    // State 3: Speaking
+                    statusMonitor.textContent = "🔊 SPEAKING...";
+                    statusMonitor.className = "status-monitor speaking";
+                    logs.innerHTML += `<p style="color: #00f2fe;"><b>Nova AI:</b> Operational routine sequence confirmed.</p>`;
 
-                // Advance index and loop back if finished
-                index = (index + 1) % sequence.length;
-            };
+                    // Reset back to looping cycle once vocal output finishes
+                    setTimeout(() => {
+                        if (isNovaActive) runNovaAIStateLoop();
+                    }, 3000);
 
-            // Start the cycle IMMEDIATELY on activation
-            cycleData();
+                }, 2500);
 
-            // Then set it to repeat every 3 seconds (adjust timing here)
-            stateCycleInterval = setInterval(cycleData, 3000);
+            }, 3000);
         }
 
-        // Reset Logic: Instantly hide all text in the orb
-        function resetDataCycle() {
-            if (stateCycleInterval) {
-                clearInterval(stateCycleInterval);
-                stateCycleInterval = null;
-            }
-            // Ensure all states are hidden
-            Object.values(states).forEach(el => el.classList.remove('visible'));
+        function sendTextCommand() {
+            let input = document.getElementById('userInput');
+            if(input.value.trim() === "") return;
+            logs.innerHTML += `<p><b>Manual Input:</b> ${input.value}</p>`;
+            input.value = "";
+            logs.scrollTop = logs.scrollHeight;
         }
     </script>
-
 </body>
-    </html>
-    
+</html>
